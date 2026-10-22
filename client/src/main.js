@@ -16,6 +16,7 @@ import { ic, itemIc } from './ui/icons.js';
 import { openPanel, closePanel, refreshPanel, panelName } from './ui/panels.js';
 import { closeCatch } from './ui/catchCard.js';
 import { initAudio, sfx, updateAmbient } from './audio.js';
+import { setupTouch, IS_TOUCH } from './game/touch.js';
 import { gameHour, phaseOf } from '../../shared/data/core.js';
 import { ITEMS, RECIPE } from '../../shared/data/items.js';
 import { NODE_TYPES, POI, regionNameAt, terrainHeight } from '../../shared/world.js';
@@ -23,7 +24,7 @@ import { NODE_TYPES, POI, regionNameAt, terrainHeight } from '../../shared/world
 // ---------- 렌더러 / 씬 ----------
 const canvas = document.getElementById('game');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
+renderer.setPixelRatio(Math.min(devicePixelRatio, IS_TOUCH ? 1.25 : 1.75));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -36,8 +37,8 @@ const fx = createFx(scene);
 scene.add(buildTerrain());
 const water = buildWater();
 scene.add(water.mesh);
-const sky = createSky(scene, { onThunder: () => setTimeout(() => sfx.thunder(), 300 + Math.random() * 1200) });
-const props = buildProps(scene, fx);
+const sky = createSky(scene, { shadowSize: IS_TOUCH ? 1024 : 2048, onThunder: () => setTimeout(() => sfx.thunder(), 300 + Math.random() * 1200) });
+const props = buildProps(scene, fx, { lite: IS_TOUCH });
 
 function resize() {
   const w = innerWidth, hh = innerHeight;
@@ -50,6 +51,7 @@ addEventListener('resize', resize);
 resize();
 
 let player = null;
+let touch = null;
 let fishing = null;
 const remotes = createRemotes({ scene, fx });
 
@@ -182,10 +184,11 @@ on('welcome', (m) => {
     loginEl.remove();
     player = createLocalPlayer({ scene, camera, canvas, me: m.me, start: m.pos });
     fishing = createFishing({ scene, fx, player, canvas, camera });
+    touch = setupTouch({ canvas, player, fishing, onInteract: interact });
     initHud({ openPanel });
     if (import.meta.env.DEV) window.__game = { player, fishing, S, send, remotes, props, camera, terrainHeight, sky };
-    chatLine({ sys: true, text: '물비늘 섬에 온 걸 환영해요. 처음이라면 H 키로 도움말을 펼쳐 보세요.', color: '#ffe08a' });
-    toast('물가에서 왼쪽 버튼을 꾹 눌렀다 떼면 낚싯대를 던져요.', 'info', 6000, 'rod');
+    chatLine({ sys: true, text: IS_TOUCH ? '물비늘 섬에 온 걸 환영해요. 처음이라면 오른쪽 위 ? 버튼으로 도움말을 펼쳐 보세요.' : '물비늘 섬에 온 걸 환영해요. 처음이라면 H 키로 도움말을 펼쳐 보세요.', color: '#ffe08a' });
+    toast(IS_TOUCH ? '물을 보고 던지기 버튼을 꾹 눌렀다 떼면 낚싯대를 던져요.' : '물가에서 왼쪽 버튼을 꾹 눌렀다 떼면 낚싯대를 던져요.', 'info', 6000, 'rod');
   } else {
     player.teleport(m.pos.x, m.pos.y, m.pos.z);
   }
@@ -359,6 +362,7 @@ function frame() {
       if (panelName() === 'shop' && !S.nearShop) closePanel();
     }
     currentInteract = S.panelOpen ? null : findInteract();
+    touch?.update({ fishingState: fishing.state, interact: currentInteract });
     setPrompt(currentInteract && fishing.state === 'idle' ? currentInteract.label : '');
     setHint(fishing.state === 'wait' ? '찌가 쑥 들어가면 클릭!' : '');
     updateHud(regionName);

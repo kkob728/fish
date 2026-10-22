@@ -83,7 +83,8 @@ function renderBait() {
   const b = id ? ITEMS[id] : NO_BAIT;
   hotbar.querySelector('.slot').replaceChildren(itemIc(id));
   hotbar.querySelector('.nm').textContent = b.name;
-  hotbar.querySelector('.ct').textContent = id ? `남은 개수 ${itemCount(id)}  ·  Q 변경` : '미끼 없음  ·  Q 변경';
+  const how = document.body.classList.contains('touch') ? '눌러서 변경' : 'Q 변경';
+  hotbar.querySelector('.ct').textContent = id ? `남은 개수 ${itemCount(id)}  ·  ${how}` : `미끼 없음  ·  ${how}`;
   hotbar.querySelector('.rod span').textContent = ROD[S.me.rod].name;
 }
 

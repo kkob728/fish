@@ -81,7 +81,7 @@ const flowerTemplate = (c) =>
 const SWAY = { tree: 0.03, pine: 0.02, palm: 0.035, bush: 0.05, reed: 0.12, flower: 0.15 };
 const SHADOW = new Set(['tree', 'pine', 'palm', 'deadtree', 'rock']);
 
-function buildVegetation(group) {
+function buildVegetation(group, tuftCount = 6000) {
   const placements = propPlacements();
   const byKind = {};
   for (const p of placements) {
@@ -110,7 +110,7 @@ function buildVegetation(group) {
   // 풀 덤불
   const r = mulberry32(31);
   const tufts = [];
-  while (tufts.length < 6000) {
+  while (tufts.length < tuftCount) {
     const x = (r() - 0.5) * 380;
     const z = (r() - 0.5) * 380;
     const h = terrainHeight(x, z);
@@ -478,10 +478,10 @@ function buildNodes(group) {
   return nodes;
 }
 
-export function buildProps(scene, fx) {
+export function buildProps(scene, fx, { lite = false } = {}) {
   const group = new THREE.Group();
   scene.add(group);
-  buildVegetation(group);
+  buildVegetation(group, lite ? 1800 : 6000);
   const glows = [];
   const camp = buildCamp(group, fx, glows);
   const boat = buildPier(group);

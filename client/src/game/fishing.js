@@ -177,7 +177,7 @@ export function createFishing({ scene, fx, player, canvas, camera }) {
     target = computeTarget();
     const zone = zoneAt(target.x, target.z);
     if (!zone) {
-      toast('물 쪽을 바라보고 던지세요. 마우스 오른쪽 드래그로 방향을 바꿀 수 있어요.', 'warn');
+      toast(document.body.classList.contains('touch') ? '물 쪽을 바라보고 던지세요. 화면 오른쪽을 밀어서 방향을 바꿀 수 있어요.' : '물 쪽을 바라보고 던지세요. 마우스 오른쪽 드래그로 방향을 바꿀 수 있어요.', 'warn');
       return setState('idle');
     }
     const z = ZONES[zone];
@@ -193,7 +193,8 @@ export function createFishing({ scene, fx, player, canvas, camera }) {
   }
 
   canvas.addEventListener('pointerdown', (e) => {
-    if (e.button === 0) press();
+    // 터치는 조이스틱/시점용 — 낚시는 화면의 행동 버튼으로
+    if (e.button === 0 && e.pointerType !== 'touch') press();
   });
   addEventListener('pointerup', (e) => {
     if (e.button === 0) release();
@@ -332,6 +333,8 @@ export function createFishing({ scene, fx, player, canvas, camera }) {
   }
 
   return {
+    press,
+    release,
     get state() {
       return state;
     },

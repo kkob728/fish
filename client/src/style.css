@@ -384,3 +384,87 @@ table.rank tr.top1 td.n { color: #c8932a; font-size: 18px; }
   .prompt { top: 56%; }
   .login-sign h1 { font-size: 42px; }
 }
+
+/* ───────── 모바일(터치) ───────── */
+.act-btn, .jump-btn, .use-btn, .chat-btn, .full-btn, .joy, .rotate-hint { display: none; }
+body.touch .act-btn, body.touch .jump-btn, body.touch .chat-btn, body.touch .full-btn, body.touch .use-btn { display: flex; }
+body.touch .rotate-hint { display: none; }
+body.touch .prompt, body.touch .keycap.k, body.touch .tile .k, body.touch .tackle .k { display: none !important; }
+body.touch button { touch-action: manipulation; }
+.act-btn {
+  position: fixed; right: calc(22px + env(safe-area-inset-right)); bottom: 22px; width: 96px; height: 96px; border-radius: 50%;
+  flex-direction: column; gap: 0; padding: 0; font-size: 14px; z-index: 5;
+}
+.act-btn .ico { width: 40px; height: 40px; }
+.act-btn.down { transform: translateY(3px); filter: brightness(0.9); }
+.act-btn.alert { background: var(--red); animation: bitePop 0.18s ease-out infinite alternate; }
+.jump-btn { position: fixed; right: calc(132px + env(safe-area-inset-right)); bottom: 26px; width: 58px; height: 58px; border-radius: 50%; padding: 0; font-size: 13px; }
+.use-btn { position: fixed; right: calc(22px + env(safe-area-inset-right)); bottom: 132px; align-items: center; gap: 6px; padding: 6px 12px 7px 8px; font-size: 15px; max-width: 46vw; }
+.use-btn .lbl { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body.touch .use-btn[style*='display: none'] { display: none !important; }
+.chat-btn { position: fixed; left: calc(14px + env(safe-area-inset-left)); bottom: 14px; padding: 4px 12px 5px; font-size: 13px; }
+.full-btn { position: fixed; left: 50%; top: 10px; transform: translateX(-50%); padding: 3px 10px 4px; font-size: 12px; opacity: 0.85; }
+.joy { position: fixed; width: 120px; height: 120px; margin: -60px 0 0 -60px; border-radius: 50%; background: rgba(255, 246, 220, 0.18); border: 3px solid rgba(59, 38, 20, 0.6); z-index: 4; }
+body.touch .joy { display: block; }
+body.touch .joy[style*='display: none'] { display: none; }
+.joy .knob { position: absolute; left: 50%; top: 50%; width: 54px; height: 54px; border-radius: 50%; background: var(--cream); border: 3px solid var(--line); box-shadow: 0 3px 0 var(--line); transform: translate(-50%, -50%); }
+.rotate-hint { position: fixed; inset: 0; z-index: 50; background: rgba(20, 12, 4, 0.85); align-items: center; justify-content: center; text-align: center; }
+.rotate-hint .plank { padding: 16px 22px 18px; font-size: 20px; }
+@media (orientation: portrait) {
+  body.touch .rotate-hint { display: flex; }
+}
+body.touch .chat { bottom: 52px; width: min(320px, 42vw); }
+body.touch .chat-log { max-height: 96px; font-size: 12.5px; }
+body.touch .reel { left: auto; right: calc(140px + env(safe-area-inset-right)); }
+body.touch .tackles { bottom: 92px; }
+body.touch .tackle { width: 50px; height: 50px; }
+body.touch .hotbar { padding: 5px 10px 5px 5px; }
+body.touch .hotbar .slot { width: 46px; height: 46px; }
+body.touch .hotbar .slot .ico { width: 32px; height: 32px; }
+
+/* 낮은 가로 화면 (휴대폰 가로) */
+@media (max-height: 520px) {
+  #ui { font-size: 13px; }
+  .hud-tl { gap: 5px; left: calc(10px + env(safe-area-inset-left)); top: 8px; }
+  .sign.money { font-size: 18px; padding: 2px 12px 3px 6px; }
+  .sign.money .ico { width: 22px; height: 22px; }
+  .sign.clock, .sign.level { font-size: 12.5px; padding: 3px 10px 4px 8px; }
+  .sign.clock .ico { width: 17px; height: 17px; }
+  .sign.level .lv { font-size: 14px; }
+  .sign.level .xpbar { width: 60px; height: 8px; }
+  .ribbon { font-size: 12.5px; padding: 2px 12px 3px 8px; }
+  .hud-tr { top: 8px; right: calc(10px + env(safe-area-inset-right)); gap: 6px; max-width: 52vw; }
+  .tile { width: 40px; height: 40px; border-radius: 10px; }
+  .tile .ico { width: 24px; height: 24px; }
+  .buff { width: 34px; height: 34px; }
+  .buff .ico { width: 20px; height: 20px; }
+  .hotbar .nm { font-size: 14px; }
+  .hotbar .ct { font-size: 11px; }
+  .toasts { top: 56px; }
+  .toast { font-size: 13px; padding: 5px 10px 6px 8px; }
+  .panel { height: calc(100vh - 44px); width: min(860px, calc(100vw - 48px)); transform: translate(-50%, -46%); }
+  .panel > header { padding: 4px 26px 6px; margin-top: -20px; }
+  .panel > header h2 { font-size: 19px; }
+  .panel > header h2 .ico { width: 22px; height: 22px; }
+  .panel .x { width: 34px; height: 34px; }
+  .tabs { padding-top: 6px; }
+  .tabs button { font-size: 12.5px; padding: 3px 9px 4px; }
+  .panel .body { padding: 10px 14px; }
+  .panel .foot { padding: 6px 14px 8px; }
+  .catch { padding: 24px 14px 12px; width: min(560px, calc(100vw - 40px)); display: grid; grid-template-columns: 200px 1fr; gap: 0 14px; text-align: left; }
+  .catch canvas { height: 150px; grid-row: 1 / span 6; align-self: center; }
+  .catch .name { font-size: 24px; margin-top: 2px; }
+  .catch .sub, .catch .flags { justify-content: flex-start; align-items: flex-start; }
+  .catch .stats { margin: 6px 0; }
+  .catch .stats b { font-size: 15px; }
+  .catch .desc { margin: 4px 0 8px; font-size: 12.5px; }
+  .catch button { font-size: 15px; padding: 4px 18px; justify-self: start; }
+  .reel .frame { height: min(260px, 62vh); }
+  .login-sign h1 { font-size: 34px; }
+  .login-sign { padding: 8px 26px 12px; }
+  .login-card { padding: 20px 18px 12px; }
+  .login-card label { margin: 6px 0 4px; }
+  .login-card .go { margin-top: 12px; font-size: 18px; padding: 6px; }
+  .login-card .hint { display: none; }
+  .modal { top: 40%; }
+}

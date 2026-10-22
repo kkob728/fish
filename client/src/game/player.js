@@ -31,6 +31,9 @@ export function createLocalPlayer({ scene, camera, canvas, me, start }) {
   let sendT = 0;
   let animState = 'idle';
   let moving = false;
+  // 터치 조이스틱 입력 (-1..1), 점프 요청
+  const stick = { x: 0, y: 0 };
+  let jumpReq = false;
 
   addEventListener('keydown', (e) => {
     if (isTyping()) return;
@@ -100,6 +103,20 @@ export function createLocalPlayer({ scene, camera, canvas, me, start }) {
     setAnim(s) {
       animState = s;
     },
+    setStick(x, y) {
+      stick.x = x;
+      stick.y = y;
+    },
+    rotateCamera(dx, dy) {
+      camYaw -= dx * 0.006;
+      camPitch = Math.min(1.35, Math.max(-0.1, camPitch + dy * 0.005));
+    },
+    zoomCamera(factor) {
+      camDist = Math.min(26, Math.max(3.5, camDist * factor));
+    },
+    jump() {
+      jumpReq = true;
+    },
     // locked: 파이팅 중엔 이동 불가, faceCam: 캐스팅 충전 중엔 카메라 방향을 봄
     update(dt, { locked = false, faceCam = false, anim = null } = {}) {
       forward.set(-Math.sin(camYaw), 0, -Math.cos(camYaw));
@@ -110,9 +127,11 @@ export function createLocalPlayer({ scene, camera, canvas, me, start }) {
         if (keys.has('KeyS') || keys.has('ArrowDown')) move.sub(forward);
         if (keys.has('KeyD') || keys.has('ArrowRight')) move.add(right);
         if (keys.has('KeyA') || keys.has('ArrowLeft')) move.sub(right);
+        const sm = Math.hypot(stick.x, stick.y);
+        if (sm > 0.15) move.addScaledVector(forward, -stick.y).addScaledVector(right, stick.x);
       }
       moving = move.lengthSq() > 0;
-      const run = keys.has('ShiftLeft') || keys.has('ShiftRight');
+      const run = keys.has('ShiftLeft') || keys.has('ShiftRight') || Math.hypot(stick.x, stick.y) > 0.92;
       const ground0 = walkHeight(pos.x, pos.z) ?? pos.y;
       const inWater = ground0 < -0.1 && terrainHeight(pos.x, pos.z) < -0.1 && pos.y < 0.2;
       const speed = (run ? 9 : 5.2) * (inWater ? 0.55 : 1);
@@ -138,7 +157,8 @@ export function createLocalPlayer({ scene, camera, canvas, me, start }) {
       }
       const ground = walkHeight(pos.x, pos.z) ?? pos.y;
       const grounded = pos.y <= ground + 0.02;
-      if (grounded && keys.has('Space') && !locked && !isTyping()) vy = 6.5;
+      if (grounded && (keys.has('Space') || jumpReq) && !locked && !isTyping()) vy = 6.5;
+      jumpReq = false;
       vy -= 22 * dt;
       pos.y += vy * dt;
       if (pos.y <= ground) {
