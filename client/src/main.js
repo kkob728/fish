@@ -227,6 +227,10 @@ on('node', (m) => {
   if (n) n.until = m.until;
 });
 on('records', (m) => Object.assign(S.records, m.records));
+on('levelUp', (m) => {
+  toast(`낚시 레벨 ${m.level}! 찌 구간이 넓어지고 물고기가 조금 느려졌어요.`, 'ok', 4500, 'star');
+  sfx.buff();
+});
 on('teleport', (m) => player?.teleport(m.x, m.y, m.z));
 
 on('gathered', (m) => {

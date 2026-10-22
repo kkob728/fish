@@ -7,7 +7,7 @@ import { stars } from './catchCard.js';
 import { fishThumb } from '../scene/fishModel.js';
 import { sfx } from '../audio.js';
 import { FISH, FISH_BY_ID } from '../../../shared/data/fish.js';
-import { ITEMS, MATERIALS, ESSENCES, BAITS, RECIPES, SHOP_STOCK, FISH_BAG_LIMIT } from '../../../shared/data/items.js';
+import { ITEMS, MATERIALS, ESSENCES, BAITS, TACKLES, RECIPES, SHOP_STOCK, FISH_BAG_LIMIT } from '../../../shared/data/items.js';
 import { RARITY, QUALITY, VARIANTS, VARIANT, RODS, ROD, WEATHERS, PHASES, formatKg, formatLen } from '../../../shared/data/core.js';
 import { ZONES, ZONE_ORDER } from '../../../shared/world.js';
 import { BEHAVIOR_NAME, BEHAVIOR_BY_SHAPE } from '../../../shared/minigame.js';
@@ -202,7 +202,7 @@ function rodRows(body, { shop }) {
 
 // ---------- 가방 ----------
 function bagPanel() {
-  const shell = panelShell('가방', 'bag', { tabs: [['fish', '물고기', 'fish'], ['mat', '재료', 'worm'], ['bait', '미끼', 'hook'], ['rod', '낚싯대', 'rod']], tabKey: 'bag' });
+  const shell = panelShell('가방', 'bag', { tabs: [['fish', '물고기', 'fish'], ['mat', '재료', 'worm'], ['bait', '미끼·도구', 'hook'], ['rod', '낚싯대', 'rod']], tabKey: 'bag' });
   return {
     el: shell.el,
     render() {
@@ -220,8 +220,11 @@ function bagPanel() {
         itemRows(shell.body, ESSENCES.map((m) => m.id), { sell: S.nearShop, empty: '변이 물고기를 손질하면 정수가 나와요.' });
         shell.foot.append(h('span.muted', S.nearShop ? '상점 앞이라 재료도 팔 수 있어요.' : '재료는 상점 앞에서 팔 수 있어요.'));
       } else if (tab === 'bait') {
+        shell.body.append(h('div.section-title', '미끼'));
         itemRows(shell.body, BAITS.map((b) => b.id), { empty: '미끼가 없어요. 제작(C)에서 만들어 보세요.' });
-        shell.foot.append(h('span.muted', '미끼는 물고기가 물었을 때 하나씩 써요. Q로 빠르게 바꿀 수 있어요.'));
+        shell.body.append(h('div.section-title', '파이팅 도구'));
+        itemRows(shell.body, TACKLES.map((t) => t.id), { sell: S.nearShop, empty: '파이팅 도구가 없어요. 상점에서 사거나 제작할 수 있어요.' });
+        shell.foot.append(h('span.muted', '미끼는 물고기가 물었을 때 하나씩 써요. 파이팅 도구는 파이팅 중에 1~4 키로 써요.'));
       } else {
         rodRows(shell.body, { shop: false });
       }
@@ -242,7 +245,8 @@ function maxCraft(r) {
 }
 function craftPanel() {
   const shell = panelShell('제작대', 'hammer');
-  const groups = [['기본 미끼', RECIPES.slice(0, 8)], ['고급 미끼', RECIPES.slice(8, 14)], ['특별한 것', RECIPES.slice(14)]];
+  const isTackle = (r) => ITEMS[r.out.id]?.tackle;
+  const groups = [['기본 미끼', RECIPES.slice(0, 8)], ['고급 미끼', RECIPES.slice(8, 14)], ['파이팅 도구', RECIPES.filter(isTackle)], ['특별한 것', RECIPES.slice(14).filter((r) => !isTackle(r))]];
   return {
     el: shell.el,
     render() {
@@ -268,7 +272,7 @@ function craftPanel() {
                   'div.grow',
                   h('div.nm', outName, r.out.n && h('span.cnt', `${r.out.n}개 · 가진 것 ${itemCount(r.out.id)}`)),
                   h('div.sub', ings),
-                  h('div.sub', r.out.rod ? '가장 넓은 찌 구간 · 감기 ×2 · 행운 +40%' : baitEffects(ITEMS[r.out.id])),
+                  h('div.sub', r.out.rod ? '가장 넓은 찌 구간 · 감기 ×2 · 행운 +40%' : ITEMS[r.out.id].tackle ? ITEMS[r.out.id].desc : baitEffects(ITEMS[r.out.id])),
                 ),
                 h('button.small', { disabled: max < 1, onclick: () => send('craft', { id: r.id, n: 1 }) }, '1번'),
                 !r.out.rod && h('button.small', { disabled: max < 5, onclick: () => send('craft', { id: r.id, n: 5 }) }, '5번'),
@@ -509,6 +513,8 @@ function helpPanel() {
       h('div', '2. 찌가 살짝 흔들리는 건 간보는 거예요. 찌가 쑥 들어가고 머리 위에 느낌표가 뜨면 바로 클릭!'),
       h('div', '3. 오른쪽 게이지에서 물고기가 위아래로 도망가요. 누르고 있으면 초록 구간이 올라가고, 떼면 내려가요. 초록 구간으로 물고기를 덮고 있으면 오른쪽 막대가 차요. 꽉 채우면 잡혀요.'),
       h('div', '4. 희귀한 물고기일수록 빠르고 변덕스러워요. 낚싯대가 좋을수록 초록 구간이 넓어져요.'),
+      h('div', '5. 파이팅 중에 1~4 키로 도구를 쓸 수 있어요. 뜰채(진행도 +25%), 진정 떡밥(물고기 느려짐), 큰 찌(구간 넓어짐), 질긴 낚싯줄(덜 떨어짐). 종류마다 한 번씩만 써요.'),
+      h('div', '6. 잡을 때마다 낚시 레벨 경험치가 쌓여요. 레벨이 오를수록 찌 구간이 넓어지고 물고기가 느려져요.'),
       h('div.section-title', '더 큰 물고기를 위해'),
       h('div', '같은 종이라도 개체마다 크기가 달라요. 클수록 품질(소형, 보통, 대형, 대물, 괴물급)과 값이 올라가요.'),
       h('div', '아주 드물게 변이(이끼, 달빛, 잿불, 그림자, 유령, 뇌전, 수정, 청자, 성운)가 붙어요. 잡으면 주변 사람들에게도 좋은 효과가 퍼져요.'),

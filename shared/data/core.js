@@ -87,10 +87,10 @@ export const BUFF_RADIUS = 45;
 
 export const RODS = [
   { id: 'bamboo', tier: 1, name: '대나무 낚싯대', price: 0, tension: 100, reel: 1.0, luck: 0, range: 18, color: '#c8a85a' },
-  { id: 'fiber', tier: 2, name: '유리섬유 낚싯대', price: 2500, tension: 125, reel: 1.15, luck: 0.05, range: 21, color: '#e8e8e0' },
-  { id: 'carbon', tier: 3, name: '카본 낚싯대', price: 12000, tension: 155, reel: 1.3, luck: 0.1, range: 24, color: '#2a2a30' },
-  { id: 'titanium', tier: 4, name: '티타늄 낚싯대', price: 50000, tension: 195, reel: 1.5, luck: 0.15, range: 27, color: '#a8b8c8' },
-  { id: 'keel', tier: 5, name: '용골 낚싯대', price: 200000, tension: 250, reel: 1.75, luck: 0.25, range: 30, color: '#f0e8d0' },
+  { id: 'fiber', tier: 2, name: '유리섬유 낚싯대', price: 2000, tension: 125, reel: 1.15, luck: 0.05, range: 21, color: '#e8e8e0' },
+  { id: 'carbon', tier: 3, name: '카본 낚싯대', price: 8000, tension: 155, reel: 1.3, luck: 0.1, range: 24, color: '#2a2a30' },
+  { id: 'titanium', tier: 4, name: '티타늄 낚싯대', price: 25000, tension: 195, reel: 1.5, luck: 0.15, range: 27, color: '#a8b8c8' },
+  { id: 'keel', tier: 5, name: '용골 낚싯대', price: 80000, tension: 250, reel: 1.75, luck: 0.25, range: 30, color: '#f0e8d0' },
   { id: 'nebula', tier: 5, name: '성운 낚싯대', price: null, tension: 300, reel: 2.0, luck: 0.4, range: 32, color: '#c78bff', crafted: true },
 ];
 export const ROD = Object.fromEntries(RODS.map((r) => [r.id, r]));

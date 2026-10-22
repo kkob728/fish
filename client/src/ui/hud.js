@@ -4,9 +4,10 @@ import { S, itemCount } from '../state.js';
 import { send, on, serverNow } from '../net.js';
 import { BAITS, ITEMS, NO_BAIT } from '../../../shared/data/items.js';
 import { ROD, WEATHERS, PHASES, gameHour, phaseOf } from '../../../shared/data/core.js';
+import { levelInfo } from '../../../shared/level.js';
 import { sfx, toggleMute, isMuted } from '../audio.js';
 
-let toastsEl, moneyEl, clockEl, regionEl, buffsEl, hotbar, baitPop, promptEl, hintEl, chatEl, chatLog, chatInput, playersPop, onlineCnt, muteBtn;
+let levelEl, toastsEl, moneyEl, clockEl, regionEl, buffsEl, hotbar, baitPop, promptEl, hintEl, chatEl, chatLog, chatInput, playersPop, onlineCnt, muteBtn;
 let openPanelFn = () => {};
 
 const TOAST_ICON = { warn: 'close', ok: 'sparkle', info: 'fish', buff: 'sparkle' };
@@ -141,6 +142,7 @@ export function initHud({ openPanel }) {
     h(
       'div.hud-tl',
       h('div.sign.plank.money', ic('coin'), moneyEl),
+      (levelEl = h('div.sign.plank.level', { title: '낚시 레벨: 오를수록 찌 구간이 넓어지고 물고기가 느려져요' })),
       clockEl,
       h('div.ribbon.paper', ic('pin'), regionEl),
     ),
@@ -223,6 +225,8 @@ function closeChat() {
 export function refreshHud() {
   if (!S.me) return;
   moneyEl.textContent = fmtMoney(S.me.money);
+  const lv = levelInfo(S.me.xp || 0);
+  levelEl.replaceChildren(h('span.lv', `Lv ${lv.level}`), h('div.xpbar', h('div', { style: { width: lv.need ? `${(lv.into / lv.need) * 100}%` : '100%' } })));
   renderBait();
   if (playersPop) renderPlayers();
   onlineCnt.textContent = String(S.players.size + 1);

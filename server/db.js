@@ -142,6 +142,7 @@ export function login(name, token, color) {
     fish: [],
     dex: {},
     stats: { catches: 0, best: null },
+    xp: 0,
     pos: null,
   };
   db.players[id] = p;

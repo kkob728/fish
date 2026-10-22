@@ -222,6 +222,18 @@ input:focus { background: #fff; }
 .reel .hint { position: absolute; left: 50%; top: -34px; transform: translateX(-50%); white-space: nowrap; font-family: var(--font-title); font-size: 14px; color: var(--cream);
   text-shadow: -2px 0 var(--line), 2px 0 var(--line), 0 -2px var(--line), 0 2px var(--line); }
 .reel.shake .frame { animation: shake 0.1s infinite; }
+.reel .zone.wide { box-shadow: 0 0 0 2px var(--green-d), 0 0 14px 4px rgba(255, 240, 150, 0.8); }
+.reel .fish.slow { filter: drop-shadow(0 0 6px #9fe8ff) saturate(0.6); }
+.tackles { position: fixed; left: 50%; bottom: 100px; transform: translateX(-50%); display: flex; gap: 8px; }
+.tackle { position: relative; width: 54px; height: 54px; padding: 0; border-radius: 12px; }
+.tackle .ico { width: 34px; height: 34px; }
+.tackle .cnt { position: absolute; left: -6px; top: -7px; min-width: 20px; height: 20px; padding: 0 4px; border-radius: 10px; background: var(--wood-2); color: var(--cream); border: 2px solid var(--line); font-size: 12px; display: flex; align-items: center; justify-content: center; }
+.tackle .k { position: absolute; right: -6px; bottom: -7px; min-width: 18px; height: 18px; font-size: 11px; }
+.tackle.used { opacity: 0.35; }
+.sign.level { gap: 8px; padding: 4px 12px 5px 10px; font-size: 15px; }
+.sign.level .lv { font-size: 18px; }
+.sign.level .xpbar { width: 90px; height: 10px; border-radius: 6px; background: rgba(40, 22, 8, 0.55); overflow: hidden; border: 2px solid var(--line); }
+.sign.level .xpbar > div { height: 100%; background: linear-gradient(90deg, #8fd45a, #c8f07a); }
 @keyframes shake { 0% { transform: translate(0, 0); } 25% { transform: translate(-2px, 1px); } 50% { transform: translate(2px, -1px); } 75% { transform: translate(-1px, 2px); } }
 
 /* ---------- 잡은 물고기 카드 ---------- */

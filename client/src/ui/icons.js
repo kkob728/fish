@@ -75,6 +75,10 @@ const ICONS = {
   drumstick: `<path d="M17 6c6-2 11 3 9 9-1 4-6 6-10 4l-5 5a3 3 0 1 1-3-3 3 3 0 1 1 1-3l5-5c-2-3 0-6 3-7z" fill="#c87a3a" ${G}/>${shine(21, 10, 1.8)}`,
   bulb: `<path d="M8 28c0-8 2-14 8-18" fill="none" ${G}/><circle cx="20" cy="9" r="8" fill="#60ffd0" opacity=".35"/><circle cx="20" cy="9" r="4.5" fill="#a8fff0" ${G}/>`,
   swirl: `<circle cx="15" cy="17" r="10" fill="#6a3a9a" ${G}/><path d="M15 17a2 2 0 1 1 2 2 4 4 0 1 1-4-4 6 6 0 1 1 6 6" fill="none" stroke="#e0b8ff" stroke-width="1.8" stroke-linecap="round"/>`,
+  net: `${line('M20 18L29 29', '#c08a52', 3)}<ellipse cx="13" cy="12" rx="9" ry="8" fill="#e8f2f4" ${G}/><path d="M6 9l14 7M8 15l12-8M10 5l6 14M16 4l-4 15" stroke="#7aa0b8" stroke-width="1.2"/><ellipse cx="13" cy="12" rx="9" ry="8" fill="none" ${G}/>`,
+  calmbait: `<circle cx="15" cy="18" r="9" fill="#a8d888" ${G}/><path d="M15 9c0-4 3-6 7-6-1 4-3 6-7 6z" fill="#5a9a3a" ${G}/><path d="M11 17h0M18 20h0" stroke="#5a8a3a" stroke-width="3" stroke-linecap="round"/>`,
+  bigfloat: `<path d="M16 3v6" ${G}/><path d="M8 16a8 8 0 0 1 16 0z" fill="#e8352a" ${G}/><path d="M8 16a8 8 0 0 0 16 0z" fill="#f7f2ea" ${G}/><path d="M16 24v5" ${G}/>${shine(12, 12, 1.6)}`,
+  spool: `<rect x="7" y="5" width="18" height="4" rx="1.5" fill="#9a6232" ${G}/><rect x="7" y="23" width="18" height="4" rx="1.5" fill="#9a6232" ${G}/><rect x="10" y="9" width="12" height="14" fill="#7fd6f0" ${G}/><path d="M10 12h12M10 15h12M10 18h12M10 21h12" stroke="#4a9ab8" stroke-width="1.3"/>`,
   lantern: `<path d="M13 4h6M16 4v3" ${G}/><rect x="9" y="7" width="14" height="20" rx="6" fill="#d8354a" ${G}/><path d="M9 12h14M9 22h14" stroke="#f2c14e" stroke-width="2"/><rect x="13" y="13" width="6" height="8" rx="2" fill="#f6f08a"/>`,
 };
 
@@ -87,6 +91,7 @@ const ITEM_ICON = {
   shell_bait: ['clam', 1], cut_bait: ['fishmeat', 1], chum: ['chum', 0], firefly_lure: ['lure', 0], spore_bait: ['spore', 1],
   sulfur_bait: ['sulfurball', 1], silver_spoon: ['spoon', 0], big_meat: ['drumstick', 1], abyss_lure: ['bulb', 0],
   odd_bait: ['swirl', 1], myth_lure: ['lantern', 0],
+  landing_net: 'net', calm_bait: 'calmbait', big_float: 'bigfloat', tough_line: 'spool',
 };
 export const BUFF_ICON = { gather: 'leaf', moonblessing: 'moon', fire: 'flame', calm: 'fog', thrill: 'bolt', clearwater: 'gem', artisan: 'vase', starblessing: 'galaxy' };
 export const WEATHER_ICON = { clear: 'sun', cloudy: 'cloud', rain: 'rain', fog: 'fog', storm: 'storm' };

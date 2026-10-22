@@ -7,7 +7,7 @@ import { toast } from '../ui/hud.js';
 import { showCatch } from '../ui/catchCard.js';
 import { zoneAt, ZONES } from '../../../shared/world.js';
 import { ROD, RARITIES } from '../../../shared/data/core.js';
-import { ITEMS, NO_BAIT } from '../../../shared/data/items.js';
+import { ITEMS, TACKLES } from '../../../shared/data/items.js';
 import { createFight } from '../../../shared/minigame.js';
 import { makeFish, displayScale } from '../scene/fishModel.js';
 import { sfx } from '../audio.js';
@@ -86,8 +86,34 @@ export function createFishing({ scene, fx, player, canvas, camera }) {
     h('div.frame.plank', h('div.water', zoneEl, fishEl), reelTag, reelHint),
     h('div.prog.plank', h('div.t', progFill)),
   );
-  castEl.style.display = biteEl.style.display = reelEl.style.display = 'none';
-  ui().append(castEl, biteEl, reelEl);
+  // 파이팅 소모품 버튼 (1~4)
+  const tackleBtns = {};
+  const tackleEl = h(
+    'div.tackles',
+    TACKLES.map((t) => {
+      const cnt = h('span.cnt', '0');
+      const b = h('button.tackle.paper', { title: `${t.name}: ${t.desc}`, onclick: () => useTackle(t.id) }, itemIc(t.id), cnt, h('span.keycap.k', t.key));
+      tackleBtns[t.id] = { b, cnt };
+      return b;
+    }),
+  );
+  castEl.style.display = biteEl.style.display = reelEl.style.display = tackleEl.style.display = 'none';
+  ui().append(castEl, biteEl, reelEl, tackleEl);
+
+  function refreshTackles() {
+    for (const t of TACKLES) {
+      const n = itemCount(t.id);
+      const used = fight?.sim.state.used.includes(t.id);
+      tackleBtns[t.id].cnt.textContent = String(n);
+      tackleBtns[t.id].b.disabled = !n || used || !fight || fight.ended;
+      tackleBtns[t.id].b.classList.toggle('used', !!used);
+    }
+  }
+  function useTackle(id) {
+    if (state !== 'fight' || !fight || fight.ended) return;
+    if (fight.sim.state.used.includes(id) || !itemCount(id)) return;
+    send('tackle', { id });
+  }
 
   let state = 'idle';
   let power = 0, powerDir = 1;
@@ -108,6 +134,7 @@ export function createFishing({ scene, fx, player, canvas, camera }) {
     castEl.style.display = s === 'charge' ? '' : 'none';
     biteEl.style.display = s === 'bite' ? '' : 'none';
     reelEl.style.display = s === 'fight' ? '' : 'none';
+    tackleEl.style.display = s === 'fight' ? '' : 'none';
     marker.visible = s === 'charge';
     if (s === 'idle') bobber.visible = line.visible = false;
   }
@@ -173,10 +200,13 @@ export function createFishing({ scene, fx, player, canvas, camera }) {
   });
   // 파이팅 중엔 스페이스로도 감을 수 있게
   addEventListener('keydown', (e) => {
-    if (e.code === 'Space' && state === 'fight' && !isTyping()) {
+    if (state !== 'fight' || isTyping()) return;
+    if (e.code === 'Space') {
       holding = true;
       e.preventDefault();
     }
+    const t = TACKLES.find((x) => e.code === `Digit${x.key}`);
+    if (t && !e.repeat) useTackle(t.id);
   });
   addEventListener('keyup', (e) => {
     if (e.code === 'Space' && state === 'fight') holding = false;
@@ -208,16 +238,24 @@ export function createFishing({ scene, fx, player, canvas, camera }) {
   });
   on('fight', (m) => {
     const rar = RARITIES[m.tier];
-    fight = { sim: createFight(m.fp, { tension: m.tension, reel: m.reel }), tier: m.tier, ended: false, tick: 0, wasIn: true };
+    fight = { sim: createFight(m.fp, m.mods), tier: m.tier, ended: false, tick: 0, wasIn: true };
     reelTag.textContent = m.tier >= 2 ? `${rar.name}급 손맛!` : '걸렸다!';
     reelTag.style.color = m.tier >= 2 ? rar.color : 'var(--ink)';
     fishEl.innerHTML = fishIconSvg(m.tier >= 2 ? rar.color : '#6aa0c8');
     zoneEl.style.height = `${fight.sim.state.zone * 100}%`;
     holding = false;
     setState('fight');
+    refreshTackles();
     fx.splash(bob.x, bob.z, 1);
     sfx.splash(1);
   });
+  on('tackleOk', (m) => {
+    if (!fight || fight.ended) return;
+    fight.sim.useTackle(m.id);
+    sfx.craft();
+    refreshTackles();
+  });
+  on('me', () => state === 'fight' && refreshTackles());
   on('lost', (m) => {
     if (fight) fight.ended = true;
     toast(LOST_MSG[m.reason] || '놓쳤어요.', 'warn');
@@ -263,6 +301,9 @@ export function createFishing({ scene, fx, player, canvas, camera }) {
     if (!f || f.ended) return;
     const s = f.sim.step(dt, holding);
     zoneEl.style.bottom = `${s.y * 100}%`;
+    zoneEl.style.height = `${s.zone * 100}%`;
+    zoneEl.classList.toggle('wide', s.t < s.wideUntil);
+    fishEl.classList.toggle('slow', s.t < s.slowUntil);
     zoneEl.classList.toggle('off', !s.inZone);
     fishEl.style.bottom = `${s.fy * 100}%`;
     fishEl.style.transform = `translate(-50%, 50%) scaleX(${s.fv > 0.05 ? -1 : 1}) rotate(${Math.max(-30, Math.min(30, s.fv * -25))}deg)`;

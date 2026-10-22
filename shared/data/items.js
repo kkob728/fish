@@ -59,7 +59,15 @@ export const BAITS = [
 
 export const NO_BAIT = { id: null, name: '맨바늘', icon: '🪝', tag: null, bite: 1.6, rarity: 0, size: 0, variant: 1, bare: true };
 
-export const ITEMS = Object.fromEntries([...MATERIALS, ...ESSENCES, ...BAITS].map((i) => [i.id, i]));
+// 파이팅 소모품 — 파이팅 중 한 종류당 한 번씩 사용
+export const TACKLES = [
+  { id: 'landing_net', name: '뜰채', icon: '', key: '1', value: 40, desc: '진행도를 즉시 25% 채워요.' },
+  { id: 'calm_bait', name: '진정 떡밥', icon: '', key: '2', value: 30, desc: '5초 동안 물고기가 40% 느려져요.' },
+  { id: 'big_float', name: '큰 찌', icon: '', key: '3', value: 35, desc: '6초 동안 찌 구간이 30% 넓어져요.' },
+  { id: 'tough_line', name: '질긴 낚싯줄', icon: '', key: '4', value: 45, desc: '이번 파이팅 동안 진행도가 절반만 떨어져요.' },
+].map((t) => ({ ...t, tackle: true }));
+
+export const ITEMS = Object.fromEntries([...MATERIALS, ...ESSENCES, ...BAITS, ...TACKLES].map((i) => [i.id, i]));
 
 // 제작: in 항목은 { id, n } 또는 { tag: 'essence', n } (아무 정수)
 export const RECIPES = [
@@ -79,6 +87,10 @@ export const RECIPES = [
   { id: 'abyss_lure', in: [{ id: 'shinyscale', n: 2 }, { id: 'shrimp', n: 1 }, { id: 'firefly', n: 1 }], out: { id: 'abyss_lure', n: 2 } },
   { id: 'odd_bait', in: [{ tag: 'essence', n: 1 }, { id: 'fishmeat', n: 2 }], out: { id: 'odd_bait', n: 2 } },
   { id: 'myth_lure', in: [{ tag: 'essence', n: 3 }, { id: 'shinyscale', n: 5 }, { id: 'big_meat', n: 1 }], out: { id: 'myth_lure', n: 1 } },
+  { id: 'landing_net', in: [{ id: 'seaweed', n: 4 }, { id: 'scale', n: 3 }], out: { id: 'landing_net', n: 1 } },
+  { id: 'calm_bait', in: [{ id: 'paste', n: 2 }, { id: 'moss', n: 1 }], out: { id: 'calm_bait', n: 1 } },
+  { id: 'big_float', in: [{ id: 'shinyscale', n: 1 }, { id: 'scale', n: 2 }], out: { id: 'big_float', n: 2 } },
+  { id: 'tough_line', in: [{ id: 'seaweed', n: 3 }, { id: 'guts', n: 2 }], out: { id: 'tough_line', n: 1 } },
   {
     id: 'rod_nebula',
     in: [{ id: 'ess_nebula', n: 1 }, { id: 'ess_crystal', n: 2 }, { id: 'ess_storm', n: 2 }, { id: 'shinyscale', n: 30 }],
@@ -95,7 +107,11 @@ export const SHOP_STOCK = [
   { id: 'worm', price: 18 },
   { id: 'cricket', price: 18 },
   { id: 'shrimp', price: 28 },
+  { id: 'landing_net', price: 120 },
+  { id: 'calm_bait', price: 90 },
+  { id: 'big_float', price: 100 },
+  { id: 'tough_line', price: 140 },
 ];
 
 export const FISH_BAG_LIMIT = 60;
-export const STARTER_ITEMS = { worm_bait: 10, paste: 10, flour: 3, corn: 3 };
+export const STARTER_ITEMS = { worm_bait: 10, paste: 10, flour: 3, corn: 3, landing_net: 2, calm_bait: 2 };

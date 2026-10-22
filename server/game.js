@@ -6,8 +6,9 @@ import { ITEMS, BAITS, NO_BAIT, RECIPE, SHOP_STOCK, FISH_BAG_LIMIT, ESSENCES } f
 import { ROD, RARITY, VARIANT, WEATHERS, BUFF_RADIUS, gameHour, phaseOf } from '../shared/data/core.js';
 import { ZONES, zoneAt, gatherNodes, NODE_TYPES, POI, walkHeight, PIER } from '../shared/world.js';
 import {
-  combineEffects, rollSpecies, rollVariant, rollSize, makeFishRecord, fightParams, minFightSeconds, dismantleYield,
+  combineEffects, rollSpecies, rollVariant, rollSize, makeFishRecord, fightParams, minFightSeconds, dismantleYield, biteWaitSeconds,
 } from '../shared/fishing.js';
+import { levelInfo, levelPerks, catchXp, MISS_XP } from '../shared/level.js';
 import { pickWeighted, randInt } from '../shared/rng.js';
 import { createTradeSystem } from './trade.js';
 
@@ -139,7 +140,7 @@ function handleCast(s, m) {
   const eff = effectsFor(s, bait);
 
   const landMs = 700 + dist * 25;
-  const waitMs = (5 + Math.random() * 11) * eff.biteMult * 1000;
+  const waitMs = biteWaitSeconds() * eff.biteMult * 1000;
   const fs = { phase: 'wait', zone, bx: x, bz: z, baitId, timers: [], castAt: now() };
   s.fs = fs;
   s.dirtyFish = true;
@@ -176,14 +177,17 @@ function doBite(s, fs) {
   fs.fp = fp;
   fs.eff = eff;
   fs.biteAt = now();
+  fs.mods = fightMods(s, eff);
+  fs.hookWindow = fp.hookWindow + levelPerks(levelInfo(s.p.xp).level).hookBonus;
+  fs.used = [];
   s.dirtyFish = true;
-  send(s, 'bite', { window: fp.hookWindow });
+  send(s, 'bite', { window: fs.hookWindow });
   fs.timers.push(
     setTimeout(() => {
       if (s.fs !== fs || fs.phase !== 'bite') return;
       send(s, 'lost', { reason: 'miss' });
       clearFishing(s);
-    }, (fp.hookWindow + 0.45) * 1000),
+    }, (fs.hookWindow + 0.45) * 1000),
   );
 }
 
@@ -199,7 +203,7 @@ function handleHook(s) {
   fs.fightAt = now();
   s.dirtyFish = true;
   const { f, size } = fs.fish;
-  send(s, 'fight', { fp: fs.fp, tension: fs.eff.tension, reel: fs.eff.reel, p: size.p, tier: RARITY[f.rarity].index });
+  send(s, 'fight', { fp: fs.fp, mods: fs.mods, p: size.p, tier: RARITY[f.rarity].index });
   fs.timers.push(
     setTimeout(() => {
       if (s.fs !== fs) return;
@@ -214,16 +218,54 @@ function handleFightEnd(s, m) {
   if (!fs || fs.phase !== 'fight') return;
   const elapsed = (now() - fs.fightAt) / 1000;
   if (!m.ok) {
+    addXp(s, MISS_XP);
     send(s, 'lost', { reason: m.reason === 'snap' ? 'snap' : 'escape' });
     return clearFishing(s);
   }
-  if (elapsed < minFightSeconds(fs.fp, fs.eff.reel) * 0.8) {
+  if (elapsed < minFightSeconds(fs.fp, fs.mods, fs.used) * 0.8) {
     send(s, 'lost', { reason: 'escape' });
     return clearFishing(s);
   }
   const { f, size, variant } = fs.fish;
   clearFishing(s);
   grantFish(s, f, size, variant);
+}
+
+// 낚싯대 + 레벨 + 버프를 합친 파이팅 보정값 (클라이언트도 이 값으로 미니게임을 돌림)
+function fightMods(s, eff) {
+  const pk = levelPerks(levelInfo(s.p.xp).level);
+  return {
+    tension: eff.tension,
+    reel: eff.reel * pk.reelMult,
+    zoneBonus: pk.zoneBonus + (eff.zoneBonus || 0),
+    speedMult: pk.speedMult * (eff.speedMult || 1),
+    gainMult: eff.gainMult || 1,
+    lossMult: eff.lossMult || 1,
+  };
+}
+
+function addXp(s, amount) {
+  const p = s.p;
+  const before = levelInfo(p.xp).level;
+  p.xp = (p.xp || 0) + Math.round(amount * (1 + (effectsFor(s, NO_BAIT).xpBonus || 0)));
+  const after = levelInfo(p.xp).level;
+  if (after > before) {
+    send(s, 'levelUp', { level: after });
+    if (after % 5 === 0) sysChat(`${p.name}님이 낚시 레벨 ${after}에 올랐어요!`, null, 'record');
+  }
+}
+
+function handleTackle(s, m) {
+  const fs = s.fs;
+  const it = ITEMS[m.id];
+  if (!fs || fs.phase !== 'fight' || !it?.tackle) return;
+  if (fs.used.includes(it.id)) return toast(s, '이번 파이팅에서 이미 썼어요.', 'warn');
+  if (!hasItem(s.p, it.id, 1)) return toast(s, `${it.name}이(가) 없어요.`, 'warn');
+  takeItem(s.p, it.id, 1);
+  fs.used.push(it.id);
+  markDirty();
+  sendMe(s);
+  send(s, 'tackleOk', { id: it.id });
 }
 
 function grantFish(s, f, size, variant) {
@@ -244,6 +286,7 @@ function grantFish(s, f, size, variant) {
   }
 
   p.stats.catches++;
+  addXp(s, catchXp(f, rec));
   if (!p.stats.best || rec.price > p.stats.best.price) p.stats.best = { ...rec };
 
   // 서버 종별 최대어 기록
@@ -506,6 +549,7 @@ const HANDLERS = {
   cast: handleCast,
   hook: handleHook,
   fightEnd: handleFightEnd,
+  tackle: handleTackle,
   cancel: (s) => s.fs && s.fs.phase !== 'fight' && clearFishing(s),
   gather: handleGather,
   craft: handleCraft,

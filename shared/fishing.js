@@ -91,10 +91,17 @@ export function fishLength(f, weight) {
   return f.len * Math.cbrt(weight / f.maxW);
 }
 
+// 지역별 값 배수 — 깊고 어려운 곳일수록 비싸다
+export const ZONE_VALUE = { lake: 2, river: 2, coast: 2, swamp: 2.5, deep: 3, hotspring: 3 };
+// 입질까지 기다리는 시간(초), 미끼/버프의 입질 배수를 곱해서 씀
+export function biteWaitSeconds(rand = Math.random) {
+  return 2.5 + rand() * 5.5;
+}
+
 export function fishPrice(f, p, variantId) {
   const q = qualityOf(p);
   const vm = variantId ? VARIANT[variantId].mult : 1;
-  return Math.max(1, Math.round(f.price * q.mult * vm * (0.85 + 0.3 * p)));
+  return Math.max(1, Math.round(f.price * (ZONE_VALUE[f.zone] || 1) * q.mult * vm * (0.85 + 0.3 * p)));
 }
 
 // 파이팅 난이도/검증은 minigame.js
