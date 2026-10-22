@@ -17,6 +17,8 @@ import { openPanel, closePanel, refreshPanel, panelName } from './ui/panels.js';
 import { closeCatch } from './ui/catchCard.js';
 import { initAudio, sfx, updateAmbient } from './audio.js';
 import { setupTouch, IS_TOUCH } from './game/touch.js';
+import { createStations } from './game/stations.js';
+import { openCook, openStall } from './ui/cooking.js';
 import { gameHour, phaseOf } from '../../shared/data/core.js';
 import { ITEMS, RECIPE } from '../../shared/data/items.js';
 import { NODE_TYPES, POI, regionNameAt, terrainHeight } from '../../shared/world.js';
@@ -39,6 +41,7 @@ const water = buildWater();
 scene.add(water.mesh);
 const sky = createSky(scene, { shadowSize: IS_TOUCH ? 1024 : 2048, onThunder: () => setTimeout(() => sfx.thunder(), 300 + Math.random() * 1200) });
 const props = buildProps(scene, fx, { lite: IS_TOUCH });
+const stations = createStations(scene, fx);
 
 function resize() {
   const w = innerWidth, hh = innerHeight;
@@ -175,6 +178,7 @@ on('welcome', (m) => {
     S.players.set(p.id, p);
     remotes.add(p);
   }
+  stations.reset(m.stations);
   for (const [id, until] of Object.entries(m.nodes || {})) {
     const n = props.nodes.get(id);
     if (n) n.until = until;
@@ -185,7 +189,7 @@ on('welcome', (m) => {
     player = createLocalPlayer({ scene, camera, canvas, me: m.me, start: m.pos });
     fishing = createFishing({ scene, fx, player, canvas, camera });
     touch = setupTouch({ canvas, player, fishing, onInteract: interact });
-    initHud({ openPanel });
+    initHud({ openPanel, toggleStation });
     if (import.meta.env.DEV) window.__game = { player, fishing, S, send, remotes, props, camera, terrainHeight, sky };
     chatLine({ sys: true, text: IS_TOUCH ? '물비늘 섬에 온 걸 환영해요. 처음이라면 오른쪽 위 ? 버튼으로 도움말을 펼쳐 보세요.' : '물비늘 섬에 온 걸 환영해요. 처음이라면 H 키로 도움말을 펼쳐 보세요.', color: '#ffe08a' });
     toast(IS_TOUCH ? '물을 보고 던지기 버튼을 꾹 눌렀다 떼면 낚싯대를 던져요.' : '물가에서 왼쪽 버튼을 꾹 눌렀다 떼면 낚싯대를 던져요.', 'info', 6000, 'rod');
@@ -272,6 +276,13 @@ function findInteract() {
       best = { kind: 'node', id: n.def.id, label: `${t.name} ${t.verb}` };
     }
   }
+  for (const st of S.stations.values()) {
+    const d = Math.hypot(st.x - p.x, st.z - p.z);
+    if (d < 3.6 && d < bd) {
+      bd = d;
+      best = st.owner === S.myId ? { kind: 'cook', label: '요리하기' } : { kind: 'stall', owner: st.owner, label: `${st.name}님의 진열대 보기` };
+    }
+  }
   for (const it of props.interactables) {
     const d = Math.hypot(it.x - p.x, it.z - p.z);
     if (d < it.r && d < bd) {
@@ -289,6 +300,8 @@ function interact() {
   else if (it.kind === 'shop') openPanel('shop');
   else if (it.kind === 'craft') openPanel('craft');
   else if (it.kind === 'board') openPanel('rank');
+  else if (it.kind === 'cook') openCook();
+  else if (it.kind === 'stall') openStall(it.owner);
 }
 
 addEventListener('keydown', (e) => {
@@ -305,12 +318,26 @@ addEventListener('keydown', (e) => {
   if (map[e.code]) return openPanel(map[e.code]);
   if (S.panelOpen) return;
   if (e.code === 'KeyE') interact();
+  if (e.code === 'KeyG') toggleStation();
   if (e.code === 'KeyT') {
     const r = remotes.nearest(player.pos, 20);
     if (r) send('tradeReq', { to: r.meta.id });
     else toast('20m 안에 다른 낚시꾼이 없어요. Tab으로 접속자 목록을 볼 수 있어요.', 'warn');
   }
 });
+
+// 조리대 깔기/거두기: 내 조리대가 가까우면 거두고, 아니면 바라보는 방향 앞에 깜
+function toggleStation() {
+  if (!player || fishing.state !== 'idle') return;
+  const mine = S.stations.get(S.myId);
+  if (mine && Math.hypot(mine.x - player.pos.x, mine.z - player.pos.z) < 8) {
+    send('pickStation');
+    toast('조리대를 거뒀어요.', 'info', 2500, 'station');
+    return;
+  }
+  const yaw = player.yaw;
+  send('placeStation', { x: +(player.pos.x + Math.sin(yaw) * 2.4).toFixed(2), z: +(player.pos.z + Math.cos(yaw) * 2.4).toFixed(2), ry: +(yaw + Math.PI).toFixed(3) });
+}
 
 // ---------- 루프 ----------
 const clock = new THREE.Clock();
@@ -342,6 +369,7 @@ function frame() {
     focus.set(POI.camp.x, 0, POI.camp.z);
   }
   remotes.update(dt, t);
+  stations.update(dt);
 
   const env = sky.update(dt, t, hour, focus, camera.position);
   water.uniforms.uTime.value = t;

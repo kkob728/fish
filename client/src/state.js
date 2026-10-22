@@ -9,6 +9,8 @@ export const S = {
   panelOpen: null, // 열린 패널 이름
   nearShop: false,
   pos: { x: 0, y: 0, z: 0 },
+  stations: new Map(), // owner -> 조리대 데이터
+  cooking: false, // 요리 미니게임 중
 };
 
 export function itemCount(id) {

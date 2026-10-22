@@ -153,7 +153,7 @@ export function setupTouch({ canvas, player, fishing, onInteract }) {
       useBtn.style.display = showUse ? '' : 'none';
       if (showUse) useBtn.querySelector('.lbl').textContent = interact.label;
       // 패널이 열려 있으면 조작 버튼 숨김
-      const hidden = !!S.panelOpen;
+      const hidden = !!S.panelOpen || S.cooking;
       actBtn.style.display = jumpBtn.style.display = hidden ? 'none' : '';
     },
   };

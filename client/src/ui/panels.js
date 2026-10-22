@@ -11,12 +11,14 @@ import { ITEMS, MATERIALS, ESSENCES, BAITS, TACKLES, RECIPES, SHOP_STOCK, FISH_B
 import { RARITY, QUALITY, VARIANTS, VARIANT, RODS, ROD, WEATHERS, PHASES, formatKg, formatLen } from '../../../shared/data/core.js';
 import { ZONES, ZONE_ORDER } from '../../../shared/world.js';
 import { BEHAVIOR_NAME, BEHAVIOR_BY_SHAPE } from '../../../shared/minigame.js';
+import { FOODS, TOOLS, RECIPES as COOK_RECIPES, FOOD_EFFECTS } from '../../../shared/data/cooking.js';
+import { dishRow } from './dishes.js';
 
 const TAG_NAME = { worm: '지렁이', insect: '곤충', paste: '떡밥', fruit: '열매', shrimp: '새우', shell: '조개', cut: '생선살', glow: '발광', fungus: '버섯', sulfur: '유황', lure: '루어', meat: '고기' };
 const BEHAVIOR_BY_SHAPE_HINT = (f) => BEHAVIOR_NAME[BEHAVIOR_BY_SHAPE[f.look.shape] || 'mixed'];
 
 let current = null;
-const tabState = { bag: 'fish', shop: 'sell', dex: 'lake' };
+export const tabState = { bag: 'fish', shop: 'sell', dex: 'lake', cook: 'cook' };
 const selected = new Set();
 let fishSort = 'recent';
 let dexDetail = null;
@@ -38,7 +40,7 @@ export function baitEffects(b) {
   return parts.join(' · ');
 }
 
-function panelShell(title, iconName, { tabs = null, tabKey = null } = {}) {
+export function panelShell(title, iconName, { tabs = null, tabKey = null } = {}) {
   const body = h('div.body');
   const foot = h('div.foot');
   const tabsEl = tabs
@@ -202,7 +204,7 @@ function rodRows(body, { shop }) {
 
 // ---------- 가방 ----------
 function bagPanel() {
-  const shell = panelShell('가방', 'bag', { tabs: [['fish', '물고기', 'fish'], ['mat', '재료', 'worm'], ['bait', '미끼·도구', 'hook'], ['rod', '낚싯대', 'rod']], tabKey: 'bag' });
+  const shell = panelShell('가방', 'bag', { tabs: [['fish', '물고기', 'fish'], ['mat', '재료', 'worm'], ['bait', '미끼·도구', 'hook'], ['dish', '요리', 'dishPot'], ['rod', '낚싯대', 'rod']], tabKey: 'bag' });
   return {
     el: shell.el,
     render() {
@@ -218,6 +220,8 @@ function bagPanel() {
         itemRows(shell.body, MATERIALS.map((m) => m.id), { sell: S.nearShop, empty: '재료가 없어요. 반짝이는 곳에서 E로 채집하거나 물고기를 손질해 보세요.' });
         shell.body.append(h('div.section-title', '변이 정수'));
         itemRows(shell.body, ESSENCES.map((m) => m.id), { sell: S.nearShop, empty: '변이 물고기를 손질하면 정수가 나와요.' });
+        shell.body.append(h('div.section-title', '식재료'));
+        itemRows(shell.body, FOODS.map((m) => m.id), { sell: S.nearShop, empty: '식재료가 없어요. 상점의 식재료 칸에서 살 수 있어요.' });
         shell.foot.append(h('span.muted', S.nearShop ? '상점 앞이라 재료도 팔 수 있어요.' : '재료는 상점 앞에서 팔 수 있어요.'));
       } else if (tab === 'bait') {
         shell.body.append(h('div.section-title', '미끼'));
@@ -225,11 +229,29 @@ function bagPanel() {
         shell.body.append(h('div.section-title', '파이팅 도구'));
         itemRows(shell.body, TACKLES.map((t) => t.id), { sell: S.nearShop, empty: '파이팅 도구가 없어요. 상점에서 사거나 제작할 수 있어요.' });
         shell.foot.append(h('span.muted', '미끼는 물고기가 물었을 때 하나씩 써요. 파이팅 도구는 파이팅 중에 1~4 키로 써요.'));
+      } else if (tab === 'dish') {
+        dishList(shell, { sell: S.nearShop, eat: true });
       } else {
         rodRows(shell.body, { shop: false });
       }
     },
   };
+}
+
+function dishList(shell, { sell, eat }) {
+  const dishes = S.me.dishes || [];
+  const food = S.buffs.find((b) => b.id === 'food' && b.until > serverNow());
+  if (food) shell.body.append(h('div.toast.paper.buff', { style: { marginBottom: '12px', animation: 'none' } }, ic('dishPot'), `먹은 요리: ${food.name} — ${food.desc}`));
+  if (!dishes.length) {
+    shell.body.append(h('div.empty', '요리가 없어요. 조리대를 깔고(G) 요리해 보세요.'));
+    return;
+  }
+  shell.body.append(h('div.list', dishes.map((d) => dishRow(d, eat && h('button.small.wood', { onclick: () => send('eatDish', { uid: d.uid }) }, '먹기'), sell && h('button.small', { onclick: () => send('sellDish', { uids: [d.uid] }) }, '팔기')))));
+  shell.foot.append(
+    h('span.muted', `요리 ${dishes.length}/40 · 먹으면 효과가 생기고, 새로 먹으면 바뀌어요.`),
+    h('span', { style: { flex: 1 } }),
+    sell && h('button.primary', { onclick: () => send('sellDish', { uids: dishes.map((d) => d.uid) }) }, ic('coin'), '요리 전부 팔기'),
+  );
 }
 
 // ---------- 제작 ----------
@@ -289,7 +311,7 @@ function craftPanel() {
 
 // ---------- 상점 ----------
 function shopPanel() {
-  const shell = panelShell('바다네 낚시 상점', 'shop', { tabs: [['sell', '팔기', 'coin'], ['buy', '재료 사기', 'flour'], ['rod', '낚싯대', 'rod']], tabKey: 'shop' });
+  const shell = panelShell('바다네 낚시 상점', 'shop', { tabs: [['sell', '팔기', 'coin'], ['buy', '낚시 재료', 'worm'], ['food', '식재료', 'flour'], ['tool', '조리 도구', 'pot'], ['recipe', '레시피', 'book'], ['rod', '낚싯대', 'rod']], tabKey: 'shop' });
   return {
     el: shell.el,
     render() {
@@ -306,12 +328,19 @@ function shopPanel() {
         fishGrid(shell.body);
         shell.body.append(h('div.section-title', '재료 팔기'));
         itemRows(shell.body, [...MATERIALS, ...ESSENCES].map((m) => m.id), { sell: true, empty: '팔 재료가 없어요.' });
+        shell.body.append(h('div.section-title', '요리 팔기 (물고기보다 훨씬 비싸요)'));
+        const dishes = S.me.dishes || [];
+        if (!dishes.length) shell.body.append(h('div.empty', { style: { padding: '10px' } }, '팔 요리가 없어요.'));
+        else {
+          shell.body.append(h('div.list', dishes.map((d) => dishRow(d, h('button.small', { onclick: () => send('sellDish', { uids: [d.uid] }) }, '팔기')))));
+          shell.body.append(h('div', { style: { marginTop: '8px' } }, h('button.small.wood', { onclick: () => send('sellDish', { uids: dishes.map((d) => d.uid) }) }, '요리 전부 팔기')));
+        }
         selectionFoot(shell.foot, { sell: true });
-      } else if (tabState.shop === 'buy') {
+      } else if (tabState.shop === 'buy' || tabState.shop === 'food') {
         shell.body.append(
           h(
             'div.list',
-            SHOP_STOCK.map((st) => {
+            SHOP_STOCK.filter((st) => (tabState.shop === 'food') === !!ITEMS[st.id].food).map((st) => {
               const it = ITEMS[st.id];
               return h(
                 'div.row-item',
@@ -322,7 +351,44 @@ function shopPanel() {
             }),
           ),
         );
-        shell.foot.append(h('span.muted', '직접 채집하면 공짜예요. 지렁이와 귀뚜라미는 풀밭, 새우는 해변에 있어요.'));
+        shell.foot.append(h('span.muted', tabState.shop === 'food' ? '조개, 새우, 해초, 버섯, 산딸기는 채집해서도 요리에 쓸 수 있어요.' : '직접 채집하면 공짜예요. 지렁이와 귀뚜라미는 풀밭, 새우는 해변에 있어요.'));
+      } else if (tabState.shop === 'tool') {
+        shell.body.append(
+          h(
+            'div.list',
+            TOOLS.map((t) => {
+              const tier = S.me.tools?.[t.id] || 0;
+              const price = tier < 3 ? t.prices[tier] : null;
+              return h(
+                'div.row-item',
+                ic(t.id),
+                h('div.grow', h('div.nm', t.name, h('span.cnt', tier ? `${tier}단계` : '없음')), h('div.sub', `${t.desc} · 단계가 오르면 요리 판정이 넉넉해져요`)),
+                price == null
+                  ? h('span.muted', '최고 단계')
+                  : h('button' + (tier ? '.small' : '.primary'), { disabled: S.me.money < price, onclick: () => send('buyTool', { id: t.id }) }, tier ? '올리기 ' : '사기 ', coinTxt(price)),
+              );
+            }),
+          ),
+        );
+        shell.foot.append(h('span.muted', '조리대(G)를 깔면 가진 도구가 모두 올라가요.'));
+      } else if (tabState.shop === 'recipe') {
+        const known = new Set(S.me.recipes || []);
+        const list = COOK_RECIPES.filter((r) => !r.hidden && r.buy != null && r.buy > 0);
+        const dishIcon = { board: 'dishBoard', grill: 'dishGrill', pot: 'dishPot', fryer: 'dishFryer' };
+        shell.body.append(
+          h(
+            'div.list',
+            list.map((r) =>
+              h(
+                'div.row-item' + (known.has(r.id) ? '.no' : ''),
+                ic(dishIcon[r.tool]),
+                h('div.grow', h('div.nm', r.name, h('span.cnt', FOOD_EFFECTS[r.effect].name)), h('div.sub', r.desc)),
+                known.has(r.id) ? h('span.muted', '알고 있음') : h('button.small', { disabled: S.me.money < r.buy, onclick: () => send('buyRecipe', { id: r.id }) }, coinTxt(r.buy)),
+              ),
+            ),
+          ),
+        );
+        shell.foot.append(h('span.muted', '레시피를 사면 재료 조합이 요리 도감에 적혀요. 사지 않아도 맞는 재료를 넣으면 발견할 수 있어요.'));
       } else {
         rodRows(shell.body, { shop: true });
         shell.foot.append(h('span.muted', '좋은 낚싯대일수록 찌 구간이 넓어 대어를 잡기 쉽고, 새 낚시터가 열려요.'));
@@ -506,7 +572,7 @@ function helpPanel() {
       'div.help',
       h('div.section-title', '조작'),
       h('div.row', k('W A S D', '이동'), k('Shift', '달리기'), k('Space', '점프'), k('우클릭 드래그', '시점'), k('휠', '줌')),
-      h('div.row', k('E', '채집 · 상점 · 제작대'), k('Q', '미끼 바꾸기'), k('T', '가까운 사람과 거래'), k('Tab', '접속자')),
+      h('div.row', k('E', '채집 · 상점 · 요리'), k('G', '조리대 깔기/거두기'), k('Q', '미끼 바꾸기'), k('T', '가까운 사람과 거래'), k('Tab', '접속자')),
       h('div.row', k('I', '가방'), k('C', '제작'), k('K', '도감'), k('L', '랭킹'), k('Enter', '채팅'), k('M', '소리')),
       h('div.section-title', '휴대폰에서는'),
       h('div', '화면 왼쪽을 누른 채 밀면 이동, 오른쪽을 밀면 시점 회전, 두 손가락으로 줌. 오른쪽 아래 큰 버튼이 던지기·챔질·감기예요. 채집이나 상점은 위에 뜨는 E 버튼을 누르세요.'),
@@ -517,6 +583,11 @@ function helpPanel() {
       h('div', '4. 희귀한 물고기일수록 빠르고 변덕스러워요. 낚싯대가 좋을수록 초록 구간이 넓어져요.'),
       h('div', '5. 파이팅 중에 1~4 키로 도구를 쓸 수 있어요. 뜰채(진행도 +25%), 진정 떡밥(물고기 느려짐), 큰 찌(구간 넓어짐), 질긴 낚싯줄(덜 떨어짐). 종류마다 한 번씩만 써요.'),
       h('div', '6. 잡을 때마다 낚시 레벨 경험치가 쌓여요. 레벨이 오를수록 찌 구간이 넓어지고 물고기가 느려져요.'),
+      h('div.section-title', '요리'),
+      h('div', 'G 키(또는 조리대 버튼)로 내 앞에 야외 조리대를 깔고, 조리대 앞에서 E로 요리해요. 도구마다 미니게임이 달라요.'),
+      h('div', '재료를 자유롭게 넣어 보세요. 맞는 조합이면 새 요리를 발견해서 요리 도감에 적혀요. 상점에서 레시피를 사도 돼요.'),
+      h('div', '요리를 먹으면 낚시가 쉬워져요. 별이 많을수록 효과가 세고, 재료가 많고 클수록 오래가요. 상점에 팔면 물고기보다 훨씬 비싸요.'),
+      h('div', '조리대 진열대에 가격을 정해 올려 두면 다른 사람이 와서 사 갈 수 있어요.'),
       h('div.section-title', '더 큰 물고기를 위해'),
       h('div', '같은 종이라도 개체마다 크기가 달라요. 클수록 품질(소형, 보통, 대형, 대물, 괴물급)과 값이 올라가요.'),
       h('div', '아주 드물게 변이(이끼, 달빛, 잿불, 그림자, 유령, 뇌전, 수정, 청자, 성운)가 붙어요. 잡으면 주변 사람들에게도 좋은 효과가 퍼져요.'),
@@ -529,7 +600,7 @@ function helpPanel() {
 
 // ---------- 거래 ----------
 let tradeState = null;
-let myOffer = { items: {}, fish: [], money: 0 };
+let myOffer = { items: {}, fish: [], dishes: [], money: 0 };
 let tradePick = 'mat';
 const pushOffer = () => send('tradeOffer', myOffer);
 function tradePanel() {
@@ -552,19 +623,25 @@ function tradePanel() {
           const sp = FISH_BY_ID[f.sp];
           out.push(h('div.mini', h('img', { src: fishThumb(f.sp, f.v), style: { width: '44px', height: '22px', objectFit: 'contain' } }), h('span.grow', `${f.v ? VARIANT[f.v].name + ' ' : ''}${sp.name} ${formatKg(f.w)}`), recs ? null : h('button.tiny', { disabled: ts.locked.me, onclick: () => { myOffer.fish = myOffer.fish.filter((u) => u !== f.uid); pushOffer(); } }, '빼기')));
         }
+        const dishRecs = recs ? ts.theirs.dishRecs || [] : (off.dishes || []).map((uid) => (S.me.dishes || []).find((d) => d.uid === uid)).filter(Boolean);
+        for (const d of dishRecs) out.push(h('div.mini', ic('dishPot'), h('span.grow', `${d.name} ${'★'.repeat(d.stars)}`), recs ? null : h('button.tiny', { disabled: ts.locked.me, onclick: () => { myOffer.dishes = myOffer.dishes.filter((u) => u !== d.uid); pushOffer(); } }, '빼기')));
         if (off.money) out.push(h('div.mini', ic('coin'), h('span.grow', fmtMoney(off.money))));
         if (!out.length) out.push(h('div.muted', { style: { fontSize: '13px', padding: '6px' } }, '비어 있어요'));
         return out;
       };
       const stateLbl = (lk, cf) => (cf ? '확정' : lk ? '준비 완료' : '고르는 중');
       const pick = h('div.trade-pick');
-      const pickTabs = h('div.seg', [['mat', '재료'], ['bait', '미끼'], ['fish', '물고기']].map(([id, l]) => h('button.tiny' + (tradePick === id ? '.wood' : ''), { onclick: () => { tradePick = id; current.render(); } }, l)));
-      if (tradePick === 'fish') {
+      const pickTabs = h('div.seg', [['mat', '재료'], ['bait', '미끼'], ['fish', '물고기'], ['dish', '요리']].map(([id, l]) => h('button.tiny' + (tradePick === id ? '.wood' : ''), { onclick: () => { tradePick = id; current.render(); } }, l)));
+      if (tradePick === 'dish') {
+        for (const d of (S.me.dishes || []).filter((d) => !myOffer.dishes.includes(d.uid))) {
+          pick.append(h('div.mini', ic('dishPot'), h('span.grow', `${d.name} ${'★'.repeat(d.stars)}`), h('button.tiny', { disabled: ts.locked.me, onclick: () => { myOffer.dishes.push(d.uid); pushOffer(); } }, '올리기')));
+        }
+      } else if (tradePick === 'fish') {
         for (const f of S.me.fish.filter((f) => !myOffer.fish.includes(f.uid))) {
           pick.append(h('div.mini', h('span.grow', `${f.v ? VARIANT[f.v].name + ' ' : ''}${FISH_BY_ID[f.sp].name} ${formatKg(f.w)}`), h('button.tiny', { disabled: ts.locked.me, onclick: () => { myOffer.fish.push(f.uid); pushOffer(); } }, '올리기')));
         }
       } else {
-        const ids = tradePick === 'bait' ? BAITS.map((b) => b.id) : [...MATERIALS, ...ESSENCES].map((m) => m.id);
+        const ids = tradePick === 'bait' ? [...BAITS, ...TACKLES].map((b) => b.id) : [...MATERIALS, ...ESSENCES, ...FOODS].map((m) => m.id);
         for (const id of ids) {
           const left = itemCount(id) - (myOffer.items[id] || 0);
           if (left <= 0) continue;
@@ -611,7 +688,7 @@ on('tradeState', (m) => {
   const opening = !tradeState;
   tradeState = m;
   S.tradeOpen = true;
-  myOffer = { items: { ...m.mine.items }, fish: [...m.mine.fish], money: m.mine.money };
+  myOffer = { items: { ...m.mine.items }, fish: [...m.mine.fish], dishes: [...(m.mine.dishes || [])], money: m.mine.money };
   if (opening || current?.name !== 'trade') openPanel('trade', true);
   else current.render();
 });
@@ -629,8 +706,16 @@ on('tradeDone', (m) => {
 
 // ---------- 패널 관리 ----------
 const BUILDERS = { bag: bagPanel, craft: craftPanel, shop: shopPanel, dex: dexPanel, rank: rankPanel, help: helpPanel, trade: tradePanel };
+export function registerPanel(name, builder) {
+  BUILDERS[name] = builder;
+}
+let panelArg = null;
+export function panelArgument() {
+  return panelArg;
+}
 
-export function openPanel(name, force = false) {
+export function openPanel(name, force = false, arg = null) {
+  panelArg = arg;
   if (S.tradeOpen && name !== 'trade' && !force) {
     toast('거래 중이에요. 먼저 거래를 끝내 주세요.', 'warn');
     return;

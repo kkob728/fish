@@ -1,11 +1,13 @@
 // 플레이어 간 거래: 요청 → 수락 → 양쪽 제안 → 양쪽 잠금 → 양쪽 확정 → 서버가 한 번에 교환
 import { ITEMS } from '../shared/data/items.js';
+import { DISH_LIMIT } from '../shared/data/cooking.js';
 
 export function createTradeSystem(ctx) {
   const { sessions, send, toast, sendMe, markDirty, hasItem, takeItem, addItems, FISH_BAG_LIMIT, sysChat } = ctx;
   const pending = new Map(); // targetId -> { fromId, until }
 
-  const emptyOffer = () => ({ items: {}, fish: [], money: 0 });
+  const emptyOffer = () => ({ items: {}, fish: [], dishes: [], money: 0 });
+  const dishesOf = (p) => (p.dishes ??= []);
   const other = (tr, s) => (tr.a === s ? tr.b : tr.a);
 
   function sendState(tr) {
@@ -15,7 +17,11 @@ export function createTradeSystem(ctx) {
       send(s, 'tradeState', {
         partner: { id: o.p.id, name: o.p.name },
         mine: tr.offer.get(s),
-        theirs: { ...theirs, fishRecs: theirs.fish.map((uid) => o.p.fish.find((f) => f.uid === uid)).filter(Boolean) },
+        theirs: {
+          ...theirs,
+          fishRecs: theirs.fish.map((uid) => o.p.fish.find((f) => f.uid === uid)).filter(Boolean),
+          dishRecs: theirs.dishes.map((uid) => dishesOf(o.p).find((d) => d.uid === uid)).filter(Boolean),
+        },
         locked: { me: !!tr.locked.get(s), them: !!tr.locked.get(o) },
         confirmed: { me: !!tr.confirmed.get(s), them: !!tr.confirmed.get(o) },
       });
@@ -32,6 +38,7 @@ export function createTradeSystem(ctx) {
   function validOffer(s, off) {
     for (const [id, n] of Object.entries(off.items)) if (!hasItem(s.p, id, n)) return false;
     for (const uid of off.fish) if (!s.p.fish.some((f) => f.uid === uid)) return false;
+    for (const uid of off.dishes) if (!dishesOf(s.p).some((d) => d.uid === uid)) return false;
     return off.money >= 0 && off.money <= s.p.money;
   }
 
@@ -43,6 +50,9 @@ export function createTradeSystem(ctx) {
     if (a.p.fish.length - oa.fish.length + ob.fish.length > FISH_BAG_LIMIT || b.p.fish.length - ob.fish.length + oa.fish.length > FISH_BAG_LIMIT) {
       return close(tr, '물고기 가방 공간이 부족해서 거래가 취소됐어요.');
     }
+    if (dishesOf(a.p).length - oa.dishes.length + ob.dishes.length > DISH_LIMIT || dishesOf(b.p).length - ob.dishes.length + oa.dishes.length > DISH_LIMIT) {
+      return close(tr, '요리 가방 공간이 부족해서 거래가 취소됐어요.');
+    }
     const move = (from, to, off) => {
       for (const [id, n] of Object.entries(off.items)) {
         takeItem(from.p, id, n);
@@ -51,6 +61,9 @@ export function createTradeSystem(ctx) {
       const moving = from.p.fish.filter((f) => off.fish.includes(f.uid));
       from.p.fish = from.p.fish.filter((f) => !off.fish.includes(f.uid));
       for (const f of moving) to.p.fish.push({ ...f, lock: false });
+      const dishes = dishesOf(from.p).filter((d) => off.dishes.includes(d.uid));
+      from.p.dishes = dishesOf(from.p).filter((d) => !off.dishes.includes(d.uid));
+      dishesOf(to.p).push(...dishes);
       from.p.money -= off.money;
       to.p.money += off.money;
     };
@@ -102,8 +115,9 @@ export function createTradeSystem(ctx) {
         }
       }
       const fish = Array.isArray(m.fish) ? [...new Set(m.fish)].filter((uid) => s.p.fish.some((f) => f.uid === uid)).slice(0, 30) : [];
+      const dishes = Array.isArray(m.dishes) ? [...new Set(m.dishes)].filter((uid) => dishesOf(s.p).some((d) => d.uid === uid)).slice(0, 20) : [];
       const money = Math.max(0, Math.min(s.p.money, Math.floor(Number(m.money) || 0)));
-      tr.offer.set(s, { items, fish, money });
+      tr.offer.set(s, { items, fish, dishes, money });
       tr.locked.clear();
       tr.confirmed.clear();
       sendState(tr);

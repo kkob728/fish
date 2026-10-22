@@ -9,6 +9,7 @@ import { sfx, toggleMute, isMuted } from '../audio.js';
 
 let levelEl, toastsEl, moneyEl, clockEl, regionEl, buffsEl, hotbar, baitPop, promptEl, hintEl, chatEl, chatLog, chatInput, playersPop, onlineCnt, muteBtn;
 let openPanelFn = () => {};
+let toggleStationFn = () => {};
 
 const TOAST_ICON = { warn: 'close', ok: 'sparkle', info: 'fish', buff: 'sparkle' };
 
@@ -133,8 +134,9 @@ function tile(iconName, key, title, onclick) {
   return h('button.tile', { onclick, title }, ic(iconName), key && h('span.keycap.k', key));
 }
 
-export function initHud({ openPanel }) {
+export function initHud({ openPanel, toggleStation }) {
   openPanelFn = openPanel;
+  toggleStationFn = toggleStation;
   const root = ui();
   moneyEl = h('span', '0');
   clockEl = h('div.sign.plank.clock');
@@ -161,6 +163,7 @@ export function initHud({ openPanel }) {
         'div.menu',
         tile('bag', 'I', '가방', () => openPanelFn('bag')),
         tile('hammer', 'C', '제작', () => openPanelFn('craft')),
+        tile('station', 'G', '조리대 깔기/거두기', () => toggleStationFn()),
         tile('book', 'K', '도감', () => openPanelFn('dex')),
         tile('trophy', 'L', '랭킹', () => openPanelFn('rank')),
         tile('help', 'H', '도움말', () => openPanelFn('help')),
@@ -254,7 +257,7 @@ export function updateHud(regionName) {
   const bsig = list.map((b) => b.id).join();
   if (buffsEl.dataset.sig !== bsig) {
     buffsEl.dataset.sig = bsig;
-    buffsEl.replaceChildren(...list.map((b) => h('div.buff.paper' + (b.global ? '.global' : ''), { title: `${b.name}: ${b.desc}` }, ic(BUFF_ICON[b.id] || 'sparkle'), h('span.tm', ''))));
+    buffsEl.replaceChildren(...list.map((b) => h('div.buffchip.paper' + (b.global ? '.global' : ''), { title: `${b.name}: ${b.desc}` }, ic(BUFF_ICON[b.id] || 'sparkle'), h('span.tm', ''))));
   }
   [...buffsEl.children].forEach((el, i) => {
     const b = list[i];

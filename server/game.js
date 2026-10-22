@@ -11,6 +11,7 @@ import {
 import { levelInfo, levelPerks, catchXp, MISS_XP } from '../shared/level.js';
 import { pickWeighted, randInt } from '../shared/rng.js';
 import { createTradeSystem } from './trade.js';
+import { createCooking } from './cooking.js';
 
 const sessions = new Map(); // id -> session
 const nodeState = new Map(); // nodeId -> respawnAt (0 = 사용 가능)
@@ -48,13 +49,14 @@ function activeBuffs(s) {
   const t = now();
   s.buffs = s.buffs.filter((b) => b.until > t);
   globalBuffs = globalBuffs.filter((b) => b.until > t);
-  return [...s.buffs, ...globalBuffs];
+  const food = cooking.foodBuff(s.p);
+  return food ? [...s.buffs, ...globalBuffs, food] : [...s.buffs, ...globalBuffs];
 }
 function sendBuffs(s) {
   const list = activeBuffs(s);
   s.buffSig = list.map((b) => b.id + b.until).join();
   send(s, 'buffs', {
-    list: list.map((b) => ({ id: b.id, name: b.name, icon: b.icon, desc: b.desc, until: b.until, global: !!b.global })),
+    list: list.map((b) => ({ id: b.id, name: b.name, icon: b.icon, desc: b.desc, until: b.until, global: !!b.global, food: !!b.food })),
   });
 }
 function applyBuff(def, from) {
@@ -542,7 +544,8 @@ function handleState(s, m) {
   s.p.pos = { x, z };
 }
 
-const trade = createTradeSystem({ sessions, send, toast, sendMe, markDirty, hasItem, takeItem, addItems, itemsText, FISH_BAG_LIMIT, sysChat });
+const cooking = createCooking({ sessions, send, toast, sendMe, markDirty, broadcast, sysChat, sendBuffs, nearShop, hasItem, takeItem, addItems, addXp, sellMult, now });
+const trade = createTradeSystem({ sessions, send, toast, sendMe, markDirty, hasItem, takeItem, addItems, itemsText, FISH_BAG_LIMIT, sysChat, cooking });
 
 const HANDLERS = {
   st: handleState,
@@ -569,6 +572,18 @@ const HANDLERS = {
   tradeLock: trade.lock,
   tradeConfirm: trade.confirm,
   tradeCancel: trade.cancel,
+  placeStation: cooking.place,
+  pickStation: cooking.pick,
+  cookStart: cooking.start,
+  cookFinish: cooking.finish,
+  cookCancel: cooking.cancel,
+  eatDish: cooking.eat,
+  sellDish: cooking.sell,
+  displayDish: cooking.display,
+  undisplayDish: cooking.undisplay,
+  buyDisplay: cooking.buyDisplay,
+  buyTool: cooking.buyTool,
+  buyRecipe: cooking.buyRecipe,
   ping: (s, m) => send(s, 'pong', { c: m.c, server: now() }),
 };
 
@@ -592,6 +607,7 @@ export function onConnection(ws) {
       const res = login(name, m.token, m.color);
       if (res.error) return ws.send(JSON.stringify({ t: 'loginFail', reason: res.error }));
       const p = res.player;
+      cooking.ensure(p);
       for (const other of sessions.values()) {
         if (other.p.id === p.id) {
           send(other, 'kicked', { reason: '다른 곳에서 같은 닉네임으로 접속했어요.' });
@@ -613,6 +629,7 @@ export function onConnection(ws) {
         weather,
         serverTime: t,
         records: getDb().records,
+        stations: cooking.list(),
         pos: { x: s.x, y: s.y, z: s.z },
       });
       sendBuffs(s);
@@ -640,6 +657,7 @@ function onClose(s) {
   if (sessions.get(s.p.id) !== s) return;
   clearFishing(s, false);
   trade.onLeave(s);
+  cooking.onLeave(s);
   sessions.delete(s.p.id);
   markDirty();
   broadcast('leave', { id: s.p.id });

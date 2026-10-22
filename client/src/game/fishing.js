@@ -152,7 +152,7 @@ export function createFishing({ scene, fx, player, canvas, camera }) {
   }
 
   function press() {
-    if (S.panelOpen || isTyping()) return;
+    if (S.panelOpen || S.cooking || isTyping()) return;
     if (state === 'idle') {
       if (S.tradeOpen) return toast('거래 중에는 낚시할 수 없어요.', 'warn');
       power = 0;

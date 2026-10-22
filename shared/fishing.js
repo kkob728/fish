@@ -29,6 +29,10 @@ export function combineEffects(rod, bait, buffs = []) {
     reel: rod.reel,
     gatherBonus: 0,
     sellBonus: 0,
+    zoneBonus: 0,
+    speedMult: 1,
+    gainMult: 1,
+    xpBonus: 0,
   };
   for (const b of buffs) {
     const ef = b.effect || {};
@@ -39,6 +43,10 @@ export function combineEffects(rod, bait, buffs = []) {
     if (ef.tensionBonus) e.tension *= 1 + ef.tensionBonus;
     if (ef.gatherBonus) e.gatherBonus += ef.gatherBonus;
     if (ef.sellBonus) e.sellBonus += ef.sellBonus;
+    if (ef.zoneBonus) e.zoneBonus += ef.zoneBonus;
+    if (ef.slow) e.speedMult *= 1 - ef.slow;
+    if (ef.gain) e.gainMult *= 1 + ef.gain;
+    if (ef.xpBonus) e.xpBonus += ef.xpBonus;
   }
   return e;
 }

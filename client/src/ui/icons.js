@@ -79,6 +79,16 @@ const ICONS = {
   calmbait: `<circle cx="15" cy="18" r="9" fill="#a8d888" ${G}/><path d="M15 9c0-4 3-6 7-6-1 4-3 6-7 6z" fill="#5a9a3a" ${G}/><path d="M11 17h0M18 20h0" stroke="#5a8a3a" stroke-width="3" stroke-linecap="round"/>`,
   bigfloat: `<path d="M16 3v6" ${G}/><path d="M8 16a8 8 0 0 1 16 0z" fill="#e8352a" ${G}/><path d="M8 16a8 8 0 0 0 16 0z" fill="#f7f2ea" ${G}/><path d="M16 24v5" ${G}/>${shine(12, 12, 1.6)}`,
   spool: `<rect x="7" y="5" width="18" height="4" rx="1.5" fill="#9a6232" ${G}/><rect x="7" y="23" width="18" height="4" rx="1.5" fill="#9a6232" ${G}/><rect x="10" y="9" width="12" height="14" fill="#7fd6f0" ${G}/><path d="M10 12h12M10 15h12M10 18h12M10 21h12" stroke="#4a9ab8" stroke-width="1.3"/>`,
+  // ---------- 요리 ----------
+  board: `<rect x="4" y="9" width="24" height="15" rx="3" fill="#d8a868" ${G}/><circle cx="24" cy="13" r="1.6" fill="${L}"/><path d="M8 19h12" stroke="#b8884a" stroke-width="1.6" stroke-linecap="round"/><path d="M14 4l8 10-2 1.5-8-10z" fill="#d8dfe4" ${G}/>`,
+  grill: `<rect x="5" y="12" width="22" height="12" rx="2" fill="#4a4040" ${G}/><path d="M9 12v12M14 12v12M19 12v12M24 12v12" stroke="#8a8080" stroke-width="1.6"/><path d="M9 28l2-4M23 28l-2-4" ${G}/><path d="M11 9c1-2-1-3 0-5M17 9c1-2-1-3 0-5M23 9c1-2-1-3 0-5" fill="none" stroke="#aab" stroke-width="1.6" stroke-linecap="round"/>`,
+  pot: `<path d="M5 13h22v9a6 6 0 0 1-6 6H11a6 6 0 0 1-6-6z" fill="#9aa3ab" ${G}/><path d="M3 13h26" ${G}/><path d="M12 8c1-2-1-3 0-5M17 8c1-2-1-3 0-5M22 8c1-2-1-3 0-5" fill="none" stroke="#aab" stroke-width="1.6" stroke-linecap="round"/><path d="M8 18h16" stroke="#c8d0d8" stroke-width="1.6"/>`,
+  fryer: `<path d="M6 12h20l-2 14H8z" fill="#5a5a60" ${G}/><path d="M7 15h18" stroke="#f2c14e" stroke-width="3"/><circle cx="12" cy="10" r="1.6" fill="#f2c14e"/><circle cx="18" cy="8" r="1.3" fill="#f2c14e"/><path d="M26 14l4-3" ${G}/>`,
+  dishBoard: `<ellipse cx="16" cy="20" rx="13" ry="6" fill="#f4f1e8" ${G}/><path d="M8 17c3-3 6-3 8 0M13 15c3-3 6-3 8 0M18 17c2-2 4-2 6 0" fill="#f08a7a" ${G}/><circle cx="9" cy="21" r="1.6" fill="#7cbf55"/>`,
+  dishGrill: `<ellipse cx="16" cy="21" rx="13" ry="6" fill="#f4f1e8" ${G}/><path d="M6 18c4-5 12-6 17-3l4-3v10l-4-3c-5 3-13 2-17-1z" fill="#c8823a" ${G}/><path d="M11 15l2 4M15 14l2 4M19 14l2 4" stroke="#7a4a1a" stroke-width="1.5"/>`,
+  dishPot: `<path d="M4 15h24a12 9 0 0 1-24 0z" fill="#e8743a" ${G}/><ellipse cx="16" cy="15" rx="12" ry="3" fill="#f2a05a" ${G}/><path d="M11 10c1-2-1-3 0-5M17 10c1-2-1-3 0-5M22 10c1-2-1-3 0-5" fill="none" stroke="#aab" stroke-width="1.6" stroke-linecap="round"/><circle cx="12" cy="15" r="1.4" fill="#7cbf55"/>`,
+  dishFryer: `<ellipse cx="16" cy="22" rx="13" ry="5" fill="#f4f1e8" ${G}/><path d="M7 19c0-5 5-7 8-5 2-3 8-2 9 2 2 1 2 4 0 5H8c-1 0-1-1-1-2z" fill="#e8b84a" ${G}/><path d="M11 16l1 2M16 15l1 2M20 16l1 2" stroke="#b8862a" stroke-width="1.4"/>`,
+  station: `<rect x="4" y="14" width="24" height="4" rx="1" fill="#c08a52" ${G}/><path d="M7 18v9M25 18v9" ${G}/><path d="M9 14V9h8v5" fill="#9aa3ab" ${G}/><path d="M19 14v-3h7v3" fill="#4a4040" ${G}/><path d="M11 6c1-2-1-3 0-4" fill="none" stroke="#aab" stroke-width="1.6" stroke-linecap="round"/>`,
   lantern: `<path d="M13 4h6M16 4v3" ${G}/><rect x="9" y="7" width="14" height="20" rx="6" fill="#d8354a" ${G}/><path d="M9 12h14M9 22h14" stroke="#f2c14e" stroke-width="2"/><rect x="13" y="13" width="6" height="8" rx="2" fill="#f6f08a"/>`,
 };
 
@@ -93,9 +103,22 @@ const ITEM_ICON = {
   odd_bait: ['swirl', 1], myth_lure: ['lantern', 0],
   landing_net: 'net', calm_bait: 'calmbait', big_float: 'bigfloat', tough_line: 'spool',
 };
-export const BUFF_ICON = { gather: 'leaf', moonblessing: 'moon', fire: 'flame', calm: 'fog', thrill: 'bolt', clearwater: 'gem', artisan: 'vase', starblessing: 'galaxy' };
+export const DISH_ICON = { board: 'dishBoard', grill: 'dishGrill', pot: 'dishPot', fryer: 'dishFryer' };
+const FOOD_ICON_COLOR = {
+  rice: '#f4f1e8', radish: '#f0f0e0', greenonion: '#7cbf55', garlic: '#f0e8d8', chili: '#d8354a', soy: '#4a2a1a', doenjang: '#a8742a',
+  oil: '#f2d24e', lemon: '#f2e04e', vinegar: '#e8d8b8', gim: '#2a3a2a', potato: '#c8a060', tofu: '#f8f4ea', egg: '#f8f0e0', sugar: '#ffffff',
+};
+// 식재료 아이콘: 이름 첫 글자를 넣은 둥근 라벨 (색은 재료별)
+function foodSvg(id, label) {
+  const c = FOOD_ICON_COLOR[id] || '#e8d8b0';
+  const dark = ['soy', 'gim', 'chili', 'doenjang'].includes(id);
+  return `<rect x="5" y="5" width="22" height="22" rx="8" fill="${c}" ${G}/><text x="16" y="21" text-anchor="middle" font-family="Jua, sans-serif" font-size="12" fill="${dark ? '#fff6dc' : L}">${label}</text>`;
+}
+export const BUFF_ICON = { food: 'dishPot', gather: 'leaf', moonblessing: 'moon', fire: 'flame', calm: 'fog', thrill: 'bolt', clearwater: 'gem', artisan: 'vase', starblessing: 'galaxy' };
 export const WEATHER_ICON = { clear: 'sun', cloudy: 'cloud', rain: 'rain', fog: 'fog', storm: 'storm' };
 export const PHASE_ICON = { dawn: 'dawn', day: 'sun', dusk: 'dawn', night: 'moon' };
+
+const FOOD_LABEL = { rice: '쌀', radish: '무', greenonion: '파', garlic: '늘', chili: '고', soy: '간', doenjang: '된', oil: '유', lemon: '레', vinegar: '초', gim: '김', potato: '감', tofu: '두', egg: '란', sugar: '당' };
 
 function gemSvg(color) {
   return `<path d="M9 5h14l5 7-12 15L4 12z" fill="${color}" ${G}/><path d="M4 12h24M12 5l-2 7 6 15 6-15-2-7" fill="none" stroke="${L}" stroke-width="1.4"/>${shine(12, 9, 1.4)}`;
@@ -108,6 +131,7 @@ export function svg(name) {
 export function itemSvg(id, essenceColor) {
   if (!id) return svg('hook');
   if (id.startsWith('ess_')) return wrap(gemSvg(essenceColor || '#c78bff'));
+  if (FOOD_ICON_COLOR[id]) return wrap(foodSvg(id, FOOD_LABEL[id]));
   const m = ITEM_ICON[id];
   if (!m) return svg('sparkle');
   if (Array.isArray(m)) return wrap(ICONS[m[0]] + (m[1] ? hookBadge : ''));
