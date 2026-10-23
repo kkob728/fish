@@ -75,20 +75,28 @@ Render 무료 플랜은 디스크가 자주 초기화되기 때문에, 진행 �
 | M | 소리 끄기/켜기 |
 
 ## 구조
+모든 코드는 TypeScript입니다. 서버는 Node 24가 .ts를 바로 실행하고, 클라이언트는 Vite가 묶습니다.
 ```
-shared/          서버와 클라이언트가 함께 쓰는 코드
-  world.js       시드 고정 지형 높이 함수, 지역 판정, 부두, 채집 노드, 장식 배치
-  fishing.js     출현표, 변이, 크기·품질, 가격, 손질 결과
-  minigame.js    스타듀식 추적 바 미니게임 (클라이언트가 돌리고 서버가 최소 시간 검증)
-  data/          물고기 77종, 미끼·재료·레시피, 희귀도·변이·낚싯대·시간·날씨
-server/          Node + ws (서버가 판정을 맡음)
-  game.js        세션, 스냅샷(10Hz), 낚시 판정, 채집, 제작, 상점, 버프, 랭킹
-  trade.js       거래 (양쪽 준비 → 양쪽 확정 → 한 번에 교환)
-  db.js          JSON 저장 (5초 디바운스, 원자적 쓰기)
-client/src/      Three.js + 순수 DOM UI
-  scene/         지형, 물 셰이더, 하늘·날씨, 소품, 캐릭터, 절차적 물고기 모델, 파티클
-  game/          내 캐릭터·카메라, 낚시 상태 머신과 추적 바 미니게임 UI, 다른 플레이어 보간
-  ui/            HUD, 패널(가방/제작/상점/도감/랭킹/거래), 잡은 물고기 카드, SVG 아이콘 세트
+shared/            서버와 클라이언트가 함께 쓰는 코드
+  types.ts         공용 타입 (물고기 기록, 아이템, 요리, 프로필…)
+  world.ts         시드 고정 지형 높이 함수, 지역 판정, 부두, 채집 노드, 장식 배치
+  fishing.ts       출현표, 변이, 크기·품질, 가격, 손질 결과
+  minigame.ts      스타듀식 추적 바 미니게임 (클라이언트가 돌리고 서버가 최소 시간 검증)
+  level.ts         낚시 레벨과 레벨 보너스
+  data/            물고기 77종, 미끼·재료·레시피, 요리, 희귀도·변이·낚싯대·시간·날씨
+server/            Node + ws (서버가 판정을 맡음)
+  game.ts          접속·메시지 분배·스냅샷(10Hz)
+  core.ts          세션, 방송, 버프, 경험치 같은 공용 도구
+  fishing.ts / gather.ts / shop.ts / social.ts / cooking.ts / trade.ts   기능별 처리
+  db.ts            저장 (DATABASE_URL이 있으면 Postgres, 없으면 data/db.json)
+client/src/        Three.js + Preact UI
+  scene/           지형, 물 셰이더, 하늘·날씨, 소품, 캐릭터, 절차적 물고기 모델, 파티클, 조리대
+  game/            내 캐릭터·카메라, 낚시 상태 머신과 추적 바 UI, 다른 플레이어, 터치 조작
+  ui/store.tsx     UI 상태 저장소 (toast, openPanel 같은 함수를 게임 코드가 부름)
+  ui/events.tsx    화면을 바꾸는 서버 이벤트 모음
+  ui/components/   HUD, 패널(가방/제작/상점/도감/랭킹/거래/조리대), 카드 — Preact 컴포넌트
+  ui/cookgame.ts   요리 미니게임
+test/              node:test 자동 테스트 (npm test)
 ```
 
 ## 치트 방지

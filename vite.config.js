@@ -2,6 +2,10 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
   root: 'client',
+  esbuild: {
+    jsx: 'automatic',
+    jsxImportSource: 'preact',
+  },
   server: {
     port: 5173,
     proxy: {

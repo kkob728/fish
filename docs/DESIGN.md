@@ -177,7 +177,7 @@ client/   Three.js 렌더링(지형/물 셰이더/하늘/날씨/캐릭터/절차
 - 가로 화면 전용(세로면 안내), 왼쪽 조이스틱·오른쪽 시점·두 손가락 줌, 행동 버튼(던지기/챔질/감기/회수), E·점프·채팅·전체화면 버튼
 - 모바일은 해상도 1.25배 제한, 그림자 1024, 풀 1/3
 
-### 요리 (`shared/data/cooking.js`, `server/cooking.js`, `client/src/ui/cooking.js`)
+### 요리 (`shared/data/cooking.ts`, `server/cooking.ts`, `client/src/ui/components/panels/Cook.tsx`, `client/src/ui/cookgame.ts`)
 - **조리대**: G 키로 내 앞에 깔고 다시 누르면 거둠. 가진 조리 도구가 모두 올라가고 다른 플레이어에게 보임
 - **조리 도구**: 석쇠(기본 지급), 도마 300, 냄비 800, 튀김솥 1,500. 2·3단계로 올리면 미니게임 판정 ×1.25 / ×1.5
 - **조리**: 재료 최대 5칸(물고기·식재료·채집물) → 도구별 2단계 미니게임

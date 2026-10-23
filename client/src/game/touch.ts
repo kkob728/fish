@@ -2,7 +2,7 @@
 import { h, ui } from '../ui/dom.ts';
 import { ic } from '../ui/icons.ts';
 import { S } from '../state.ts';
-import { openChat } from '../ui/hud.ts';
+import { openChat } from '../ui/store.tsx';
 
 export const IS_TOUCH = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
 

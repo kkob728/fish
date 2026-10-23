@@ -11,16 +11,12 @@ import { createRemotes } from './game/remote.ts';
 import { connect, on, send, serverNow } from './net.ts';
 import { S } from './state.ts';
 import { h, ui, isTyping } from './ui/dom.ts';
-import { initHud, refreshHud, updateHud, toast, setPrompt, setHint, hudKeys, chatLine, itemsNode } from './ui/hud.ts';
-import { ic, itemIc } from './ui/icons.ts';
-import { openPanel, closePanel, refreshPanel, panelName } from './ui/panels.ts';
-import { closeCatch } from './ui/catchCard.ts';
+import { U, bump, refreshHud, updateHud, toast, setPrompt, setHint, hudKeys, chatLine, openPanel, closePanel, panelName, closeCatch } from './ui/store.tsx';
+import { mountUi } from './ui/App.tsx';
 import { initAudio, sfx, updateAmbient } from './audio.ts';
 import { setupTouch, IS_TOUCH } from './game/touch.ts';
 import { createStations } from './game/stations.ts';
-import { openCook, openStall } from './ui/cooking.ts';
 import { gameHour, phaseOf } from '../../shared/data/core.ts';
-import { ITEMS, RECIPE } from '../../shared/data/items.ts';
 import { NODE_TYPES, POI, regionNameAt, terrainHeight } from '../../shared/world.ts';
 
 // ---------- 렌더러 / 씬 ----------
@@ -111,6 +107,7 @@ const loginEl = h(
 );
 ui().append(loginEl);
 nameIn.focus();
+mountUi();
 
 let joined = false;
 function doLogin() {
@@ -189,7 +186,8 @@ on('welcome', (m) => {
     player = createLocalPlayer({ scene, camera, canvas, me: m.me, start: m.pos });
     fishing = createFishing({ scene, fx, player, canvas, camera });
     touch = setupTouch({ canvas, player, fishing, onInteract: interact });
-    initHud({ openPanel, toggleStation });
+    U.toggleStation = toggleStation;
+    U.ready = true;
     if (import.meta.env.DEV) window.__game = { player, fishing, S, send, remotes, props, camera, terrainHeight, sky };
     chatLine({ sys: true, text: IS_TOUCH ? '물비늘 섬에 온 걸 환영해요. 처음이라면 오른쪽 위 ? 버튼으로 도움말을 펼쳐 보세요.' : '물비늘 섬에 온 걸 환영해요. 처음이라면 H 키로 도움말을 펼쳐 보세요.', color: '#ffe08a' });
     toast(IS_TOUCH ? '물을 보고 던지기 버튼을 꾹 눌렀다 떼면 낚싯대를 던져요.' : '물가에서 왼쪽 버튼을 꾹 눌렀다 떼면 낚싯대를 던져요.', 'info', 6000, 'rod');
@@ -202,19 +200,15 @@ on('welcome', (m) => {
 on('me', (m) => {
   S.me = m.me;
   player?.char.setRod(m.me.rod);
-  refreshHud();
-  refreshPanel();
 });
 on('snap', (m) => remotes.snapshot(m.time, m.p, S.myId));
 on('join', (m) => {
   S.players.set(m.player.id, m.player);
   remotes.add(m.player);
-  refreshHud();
 });
 on('leave', (m) => {
   S.players.delete(m.id);
   remotes.remove(m.id);
-  refreshHud();
 });
 on('meta', (m) => {
   if (m.player.id === S.myId) return;
@@ -234,31 +228,12 @@ on('node', (m) => {
   if (n) n.until = m.until;
 });
 on('records', (m) => Object.assign(S.records, m.records));
-on('levelUp', (m) => {
-  toast(`낚시 레벨 ${m.level}! 찌 구간이 넓어지고 물고기가 조금 느려졌어요.`, 'ok', 4500, 'star');
-  sfx.buff();
-});
 on('teleport', (m) => player?.teleport(m.x, m.y, m.z));
 
 on('gathered', (m) => {
-  toast(itemsNode(m.items), 'ok');
-  sfx.gather();
   const n = props.nodes.get(m.id);
   if (n) fx.sparkle(n.def.x, n.group.position.y + 1, n.def.z, '#fff2a0', 20, 1);
 });
-on('crafted', (m) => {
-  toast(h('span', h('span.items', h('span', itemIc(RECIPE[m.id]?.out.id), `${RECIPE[m.id]?.out.id ? ITEMS[RECIPE[m.id].out.id].name : '낚싯대'} 완성`)), m.n > 1 ? ` (${m.n}번)` : ''), 'ok');
-  sfx.craft();
-});
-on('sold', (m) => {
-  toast(h('span.items', h('span', ic('coin'), `+${m.total.toLocaleString()}`), `${m.count}개 판매`), 'ok');
-  sfx.coin();
-});
-on('dismantled', (m) => {
-  toast(h('span', '손질해서 얻음  ', itemsNode(m.items)), 'ok', 4500, 'knife');
-  sfx.craft();
-});
-
 // ---------- 상호작용 ----------
 let currentInteract = null;
 function findInteract() {
@@ -300,8 +275,8 @@ function interact() {
   else if (it.kind === 'shop') openPanel('shop');
   else if (it.kind === 'craft') openPanel('craft');
   else if (it.kind === 'board') openPanel('rank');
-  else if (it.kind === 'cook') openCook();
-  else if (it.kind === 'stall') openStall(it.owner);
+  else if (it.kind === 'cook') openPanel('cook');
+  else if (it.kind === 'stall') openPanel('stall', false, it.owner);
 }
 
 addEventListener('keydown', (e) => {
@@ -386,7 +361,11 @@ function frame() {
     if (regionT <= 0) {
       regionT = 0.5;
       regionName = regionNameAt(player.pos.x, player.pos.z);
-      S.nearShop = Math.hypot(player.pos.x - POI.shop.x, player.pos.z - POI.shop.z) < 8.5;
+      const near = Math.hypot(player.pos.x - POI.shop.x, player.pos.z - POI.shop.z) < 8.5;
+      if (near !== S.nearShop) {
+        S.nearShop = near;
+        bump();
+      }
       if (panelName() === 'shop' && !S.nearShop) closePanel();
     }
     currentInteract = S.panelOpen ? null : findInteract();
