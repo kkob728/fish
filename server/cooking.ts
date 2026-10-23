@@ -8,10 +8,12 @@ import {
   fishTags, ingredientTags, matchRecipe, dishStars, dishDuration, effectFor,
 } from '../shared/data/cooking.ts';
 import { walkHeight, terrainHeight } from '../shared/world.ts';
+import type { Profile, Dish } from '../shared/types.ts';
+import { type Handler, type Session, sessions, now, send, broadcast, sysChat, toast, sendMe, markDirty, sendBuffs, hasItem, takeItem, addItems, addXp, sellMult } from './core.ts';
+import { nearShop } from './shop.ts';
 
-export function createCooking(ctx) {
-  const { sessions, send, toast, sendMe, markDirty, broadcast, sysChat, sendBuffs, nearShop, hasItem, takeItem, addItems, addXp, sellMult, now } = ctx;
-  const stations = new Map(); // ownerId -> station
+function createCooking() {
+  const stations = new Map<string, any>(); // ownerId -> station
 
   const uid = () => crypto.randomBytes(5).toString('hex');
   const pub = (st) => ({
@@ -20,7 +22,7 @@ export function createCooking(ctx) {
   });
   const pushStation = (st) => broadcast('station', { station: pub(st) });
 
-  function ensure(p) {
+  function ensure(p: Profile) {
     p.tools ??= { ...STARTER_TOOLS };
     p.recipes ??= ['grilled'];
     p.dishes ??= [];
@@ -59,12 +61,6 @@ export function createCooking(ctx) {
   return {
     ensure,
     list: () => [...stations.values()].map(pub),
-    // 진행 중인 음식 버프 (activeBuffs 에 합쳐짐)
-    foodBuff(p) {
-      const f = p.food;
-      if (!f || f.until <= now()) return null;
-      return { id: 'food', name: f.name, icon: 'food', desc: FOOD_EFFECTS[f.type].fmt(f.value), effect: f.effect, until: f.until, food: true };
-    },
 
     place(s, m) {
       ensure(s.p);
@@ -154,7 +150,7 @@ export function createCooking(ctx) {
       const r = c.recipe || MYSTERY[c.tool];
       const legend = c.recipe?.hidden;
       const { value: power, effect } = effectFor(r.effect, stars, (c.variant ? 1.25 : 1) * (legend ? 1.4 : 1));
-      const dish = {
+      const dish: Dish = {
         uid: uid(),
         rid: r.id,
         name: c.variant ? `${VARIANT[c.variant].name} ${r.name}` : r.name,
@@ -334,3 +330,20 @@ export function createCooking(ctx) {
     },
   };
 }
+
+export const cooking = createCooking();
+export const cookingHandlers: Record<string, Handler> = {
+  placeStation: cooking.place,
+  pickStation: cooking.pick,
+  cookStart: cooking.start,
+  cookFinish: cooking.finish,
+  cookCancel: cooking.cancel,
+  eatDish: cooking.eat,
+  sellDish: cooking.sell,
+  displayDish: cooking.display,
+  undisplayDish: cooking.undisplay,
+  buyDisplay: cooking.buyDisplay,
+  buyTool: cooking.buyTool,
+  buyRecipe: cooking.buyRecipe,
+};
+export type { Session };

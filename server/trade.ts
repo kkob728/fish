@@ -1,12 +1,14 @@
 // 플레이어 간 거래: 요청 → 수락 → 양쪽 제안 → 양쪽 잠금 → 양쪽 확정 → 서버가 한 번에 교환
 import { ITEMS } from '../shared/data/items.ts';
 import { DISH_LIMIT } from '../shared/data/cooking.ts';
+import { FISH_BAG_LIMIT } from '../shared/data/items.ts';
+import { type Handler, sessions, send, toast, sendMe, markDirty, sysChat, hasItem, takeItem, addItems } from './core.ts';
 
-export function createTradeSystem(ctx) {
-  const { sessions, send, toast, sendMe, markDirty, hasItem, takeItem, addItems, FISH_BAG_LIMIT, sysChat } = ctx;
+function createTradeSystem() {
   const pending = new Map(); // targetId -> { fromId, until }
 
-  const emptyOffer = () => ({ items: {}, fish: [], dishes: [], money: 0 });
+  type Offer = { items: Record<string, number>; fish: string[]; dishes: string[]; money: number };
+  const emptyOffer = (): Offer => ({ items: {}, fish: [], dishes: [], money: 0 });
   const dishesOf = (p) => (p.dishes ??= []);
   const other = (tr, s) => (tr.a === s ? tr.b : tr.a);
 
@@ -35,7 +37,7 @@ export function createTradeSystem(ctx) {
     }
   }
 
-  function validOffer(s, off) {
+  function validOffer(s, off: Offer) {
     for (const [id, n] of Object.entries(off.items)) if (!hasItem(s.p, id, n)) return false;
     for (const uid of off.fish) if (!s.p.fish.some((f) => f.uid === uid)) return false;
     for (const uid of off.dishes) if (!dishesOf(s.p).some((d) => d.uid === uid)) return false;
@@ -53,7 +55,7 @@ export function createTradeSystem(ctx) {
     if (dishesOf(a.p).length - oa.dishes.length + ob.dishes.length > DISH_LIMIT || dishesOf(b.p).length - ob.dishes.length + oa.dishes.length > DISH_LIMIT) {
       return close(tr, '요리 가방 공간이 부족해서 거래가 취소됐어요.');
     }
-    const move = (from, to, off) => {
+    const move = (from, to, off: Offer) => {
       for (const [id, n] of Object.entries(off.items)) {
         takeItem(from.p, id, n);
         addItems(to.p, { [id]: n });
@@ -145,3 +147,13 @@ export function createTradeSystem(ctx) {
     },
   };
 }
+
+export const trade = createTradeSystem();
+export const tradeHandlers: Record<string, Handler> = {
+  tradeReq: trade.request,
+  tradeRespond: trade.respond,
+  tradeOffer: trade.offer,
+  tradeLock: trade.lock,
+  tradeConfirm: trade.confirm,
+  tradeCancel: trade.cancel,
+};
