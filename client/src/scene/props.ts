@@ -147,7 +147,7 @@ function buildVegetation(group, tuftCount = 6000) {
   group.add(tim);
 }
 
-function sign(lines, { w = 2.2, h = 1.1, pos, rotY = 0, post = true }) {
+export function sign(lines, { w = 2.2, h = 1.1, pos, rotY = 0, post = true }) {
   const g = new THREE.Group();
   const tex = textTexture(lines, { w: 512, h: Math.round(512 * (h / w)), size: lines.length > 1 ? 70 : 84 });
   const board = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.08), [
@@ -394,6 +394,7 @@ function buildPier(group) {
   boat.position.set(PIER.x + 4.5, 0.05, PIER.z1 - 12);
   boat.rotation.y = 0.15;
   boat.castShadow = true;
+  boat.visible = false; // 진짜 배가 생겨서 장식 배는 숨김 (그 자리가 배 띄우는 곳)
   group.add(boat);
   group.add(sign(['긴 부두', '끝까지 가면 심해 (카본 이상)'], { w: 2.6, h: 1.2, pos: [PIER.x + 3.4, undefined, PIER.z0 + 14], rotY: -Math.PI / 2 }));
   return boat;

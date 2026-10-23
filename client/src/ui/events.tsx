@@ -77,6 +77,13 @@ export function initUiEvents() {
       sfx.craft();
     }
   });
+  on('caught', (m) => {
+    if (!m.seed) return;
+    setTimeout(() => {
+      toast(`물고기 뱃속에서 ${ITEMS[m.seed].name}이 나왔어요! 텃밭에 심어 보세요.`, 'ok', 5000, 'sprout');
+      sfx.buff();
+    }, 1200);
+  });
   on('leaderboard', (m) => {
     U.leaderboard = m;
     bump();

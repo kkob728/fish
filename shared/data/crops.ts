@@ -4,7 +4,8 @@
 export interface Crop {
   id: string;
   name: string;
-  kind: 'food' | 'bait' | 'sale';
+  kind: 'food' | 'bait' | 'sale' | 'special';
+  from?: string; // 특별 작물: 씨앗이 나오는 바다 구역
   seed: number; // 씨앗 값
   min: number; // 물을 잘 줬을 때 다 자라는 데 걸리는 분
   yield: [number, number];
@@ -27,6 +28,11 @@ export const CROPS: Crop[] = [
   { id: 'sunflower', name: '해바라기', kind: 'sale', seed: 20, min: 25, yield: [1, 2], out: 'g_sunflower', color: '#f2c14e', look: 'flower', desc: '상점에 팔아요.' },
   { id: 'pumpkin', name: '호박', kind: 'sale', seed: 30, min: 40, yield: [1, 1], out: 'g_pumpkin', color: '#e8862a', look: 'vine', desc: '팔거나 요리에 써요.' },
   { id: 'watermelon', name: '수박', kind: 'sale', seed: 60, min: 70, yield: [1, 1], out: 'g_watermelon', color: '#4a9a3a', look: 'vine', desc: '오래 걸리지만 비싸요.' },
+  // 특별 작물: 상점에서 팔지 않고, 바다 구역에서 물고기를 낚으면 가끔 씨앗이 딸려 나옴
+  { id: 'seagrape', name: '바다포도', kind: 'special', from: 'reef', seed: 40, min: 30, yield: [2, 4], out: 'g_seagrape', color: '#3ac0a0', look: 'bush', desc: '산호초 물고기 뱃속에서 나온 씨앗.' },
+  { id: 'stormpepper', name: '폭풍 고추', kind: 'special', from: 'open', seed: 60, min: 40, yield: [2, 4], out: 'g_stormpepper', color: '#8a3af0', look: 'bush', desc: '먼바다에서 건진 보랏빛 씨앗.' },
+  { id: 'frostmelon', name: '서리 멜론', kind: 'special', from: 'ice', seed: 120, min: 60, yield: [1, 1], out: 'g_frostmelon', color: '#a8e0f8', look: 'vine', desc: '얼음 바다에서 얼어붙은 채 건진 씨앗.' },
+  { id: 'glowbulb', name: '심해 등불꽃', kind: 'special', from: 'trench', seed: 200, min: 70, yield: [1, 1], out: 'g_glowbulb', color: '#60f0e0', look: 'flower', desc: '해구 바닥의 빛을 머금은 씨앗.' },
 ];
 export const CROP: Record<string, Crop> = Object.fromEntries(CROPS.map((c) => [c.id, c]));
 
@@ -42,9 +48,16 @@ export const PRODUCE = [
   { id: 'g_sunflower', name: '해바라기', tags: null, value: 60, desc: '꽃집에서 좋아한다.' },
   { id: 'g_pumpkin', name: '호박', tags: ['veg', 'sweet'], value: 150, desc: '크고 단 호박.' },
   { id: 'g_watermelon', name: '수박', tags: ['fruit', 'sweet'], value: 340, desc: '줄무늬가 선명한 수박.' },
+  { id: 'g_seagrape', name: '바다포도', tags: ['seaweed', 'fruit'], value: 45, desc: '톡톡 터지는 초록 알갱이.' },
+  { id: 'g_stormpepper', name: '폭풍 고추', tags: ['spice', 'veg'], value: 70, desc: '혀가 번쩍할 만큼 맵다.' },
+  { id: 'g_frostmelon', name: '서리 멜론', tags: ['fruit', 'sweet'], value: 800, desc: '속살이 살얼음처럼 시원하다.' },
+  { id: 'g_glowbulb', name: '심해 등불꽃', tags: null, value: 1500, desc: '어둠 속에서 은은하게 빛나는 꽃. 수집가들이 탐낸다.' },
 ].map((p) => ({ ...p, home: true, food: !!p.tags }));
 
 export const SEEDS = CROPS.map((c) => ({ id: `seed_${c.id}`, name: `${c.name} 씨앗`, value: Math.max(1, Math.floor(c.seed / 2)), seed: c.id, desc: `${c.min}분 · ${c.desc}` }));
+// 바다 구역 → 그 구역에서 나오는 특별 씨앗
+export const SEA_SEED: Record<string, string> = Object.fromEntries(CROPS.filter((c) => c.from).map((c) => [c.from, `seed_${c.id}`]));
+export const SEA_SEED_CHANCE = 0.07;
 export const seedOf = (cropId: string) => `seed_${cropId}`;
 
 // ---------- 밭 배치 ----------

@@ -53,6 +53,24 @@ function Buffs() {
   );
 }
 
+function BoatBar() {
+  useTick(250);
+  const ri = S.rideInfo;
+  if (!ri) return null;
+  return (
+    <div class="boatbar plank">
+      <Icon name="boat" />
+      <b>{ri.name}</b>
+      <span>{`${Math.round(Math.abs(ri.v) * 3.6)}km/h`}</span>
+      <span class={`anc${ri.anchored ? ' on' : ''}`}>
+        <Icon name="anchor" />
+        {ri.anchored ? '닻 내림' : '항해 중'}
+      </span>
+      {!ri.captain && <span class="muted-l">손님</span>}
+    </div>
+  );
+}
+
 function Tile({ icon, k, title, onClick, children }: { icon: string; k?: string; title: string; onClick: () => void; children?: any }) {
   return (
     <button class="tile" onClick={onClick} title={title}>
@@ -226,6 +244,7 @@ export function Hud() {
         <Buffs />
       </div>
       <Hotbar />
+      <BoatBar />
       {ui.baitOpen && <BaitPop />}
       {ui.playersOpen && <Players />}
       {ui.prompt && (

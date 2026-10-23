@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { FISH } from '../shared/data/fish.ts';
 import { ITEMS, RECIPES, SHOP_STOCK, BAITS, ESSENCES, TACKLES } from '../shared/data/items.ts';
 import { RARITY, VARIANTS, ROD } from '../shared/data/core.ts';
-import { ZONE_ORDER } from '../shared/world.ts';
+import { ZONE_ORDER, ZONES } from '../shared/world.ts';
 import { RECIPES as COOK, FOODS, EXTRA_FOOD_TAGS, TAG_NAME, FOOD_EFFECTS, TOOLS, TOOL_STEPS, fishTags } from '../shared/data/cooking.ts';
 
 test('물고기: id 중복 없음, 지역·희귀도·무게 범위가 올바름', () => {
@@ -17,7 +17,12 @@ test('물고기: id 중복 없음, 지역·희귀도·무게 범위가 올바름
     assert.ok(f.minW > 0 && f.minW < f.maxW, `${f.id} 무게`);
     assert.ok(f.likes.length > 0, `${f.id} 좋아하는 미끼`);
   }
-  for (const z of ZONE_ORDER) assert.ok(FISH.filter((f) => f.zone === z).length >= 10, `${z} 어종 수`);
+  // 섬 낚시터는 10종 이상, 배로 가는 바다 구역은 6종 이상. 어디든 흔한 물고기가 있어야 함
+  for (const z of ZONE_ORDER) {
+    const list = FISH.filter((f) => f.zone === z);
+    assert.ok(list.length >= (ZONES[z].boat ? 6 : 10), `${z} 어종 수`);
+    assert.ok(list.some((f) => f.rarity === 'common'), `${z} 흔한 물고기`);
+  }
 });
 
 test('아이템: 제작 레시피·상점 목록이 존재하는 아이템만 참조', () => {

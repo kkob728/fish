@@ -10,9 +10,10 @@ import { RankPanel, HelpPanel } from './components/panels/Info.tsx';
 import { TradePanel } from './components/panels/Trade.tsx';
 import { CookPanel, StallPanel } from './components/panels/Cook.tsx';
 import { FarmPanel } from './components/panels/Farm.tsx';
+import { ShipyardPanel } from './components/panels/Shipyard.tsx';
 import { initUiEvents } from './events.tsx';
 
-const PANELS = { bag: BagPanel, craft: CraftPanel, shop: ShopPanel, dex: DexPanel, rank: RankPanel, help: HelpPanel, trade: TradePanel, cook: CookPanel, stall: StallPanel, farm: FarmPanel };
+const PANELS = { bag: BagPanel, craft: CraftPanel, shop: ShopPanel, dex: DexPanel, rank: RankPanel, help: HelpPanel, trade: TradePanel, cook: CookPanel, stall: StallPanel, farm: FarmPanel, shipyard: ShipyardPanel };
 
 function App() {
   const ui = useUi();

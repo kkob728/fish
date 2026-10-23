@@ -12,6 +12,7 @@ import { BAITS } from '../../../../../shared/data/items.ts';
 import { RARITY, VARIANTS, VARIANT, RODS, WEATHERS, PHASES, formatKg } from '../../../../../shared/data/core.ts';
 import { ZONES, ZONE_ORDER } from '../../../../../shared/world.ts';
 import { BEHAVIOR_NAME, BEHAVIOR_BY_SHAPE } from '../../../../../shared/minigame.ts';
+import { BOAT } from '../../../../../shared/sea.ts';
 
 const DEX_TABS: [string, string, string?][] = [...ZONE_ORDER.map((z): [string, string] => [z, ZONES[z].name]), ['variant', '변이', 'sparkle']];
 const chip = { display: 'inline-flex', alignItems: 'center', gap: '2px', marginRight: '6px' };
@@ -159,7 +160,7 @@ function ZoneGrid({ zone, onPick }: { zone: string; onPick: (id: string) => void
     <>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
         <span class="title" style={{ fontSize: '17px' }}>{`${z.name}  ${got} / ${list.length}`}</span>
-        <span class="muted">{`${rodName} 이상`}</span>
+        <span class="muted">{z.boat ? `${BOAT(z.boat).name} · ${rodName} 이상` : `${rodName} 이상`}</span>
       </div>
       <div class="dex-grid">
         {list.map((f) => {

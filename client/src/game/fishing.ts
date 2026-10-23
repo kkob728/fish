@@ -4,6 +4,7 @@ import { S, itemCount } from '../state.ts';
 import { h, ui, isTyping } from '../ui/dom.ts';
 import { ic, itemIc } from '../ui/icons.ts';
 import { toast, showCatch } from '../ui/store.tsx';
+import { boatNeedFor } from './boats.ts';
 import { zoneAt, ZONES } from '../../../shared/world.ts';
 import { ROD, RARITIES } from '../../../shared/data/core.ts';
 import { ITEMS, TACKLES } from '../../../shared/data/items.ts';
@@ -46,6 +47,7 @@ export function updateLine(line, tip, end, sag) {
 
 const LOST_MSG = {
   miss: '챔질이 늦었어요. 미끼만 뺏겼네요.',
+  boat: '배가 움직여서 낚싯줄을 거뒀어요.',
   early: '너무 일찍 챔질했어요.',
   snap: '줄이 끊어졌어요!',
   escape: '물고기가 바늘을 털고 달아났어요.',
@@ -154,6 +156,7 @@ export function createFishing({ scene, fx, player, canvas, camera }) {
     if (S.panelOpen || S.cooking || isTyping()) return;
     if (state === 'idle') {
       if (S.tradeOpen) return toast('거래 중에는 낚시할 수 없어요.', 'warn');
+      if (S.rideInfo && !S.rideInfo.anchored) return toast(S.rideInfo.captain ? '배가 움직이는 중이에요. Space로 닻을 내리면 낚시할 수 있어요.' : '배가 움직이는 중이에요. 선장이 닻을 내리면 낚시할 수 있어요.', 'warn');
       power = 0;
       powerDir = 1;
       setState('charge');
@@ -180,6 +183,11 @@ export function createFishing({ scene, fx, player, canvas, camera }) {
       return setState('idle');
     }
     const z = ZONES[zone];
+    const needBoat = boatNeedFor(zone);
+    if (needBoat) {
+      toast(needBoat, 'warn');
+      return setState('idle');
+    }
     if (ROD[S.me.rod].tier < z.minRod) {
       const need = Object.values(ROD).find((r) => r.tier === z.minRod && !r.crafted);
       toast(`${z.name}은(는) ${need.name} 이상이 필요해요.`, 'warn');
@@ -363,7 +371,7 @@ export function createFishing({ scene, fx, player, canvas, camera }) {
         castFill.style.width = `${power * 100}%`;
         const tg = computeTarget();
         const zone = zoneAt(tg.x, tg.z);
-        const okTier = zone && ROD[S.me.rod].tier >= ZONES[zone].minRod;
+        const okTier = zone && ROD[S.me.rod].tier >= ZONES[zone].minRod && !boatNeedFor(zone);
         marker.position.set(tg.x, 0.06, tg.z);
         marker.material.color.set(zone ? (okTier ? '#8fe05a' : '#ffb347') : '#ff5a4a');
         marker.scale.setScalar(1 + Math.sin(t * 8) * 0.08);
@@ -374,7 +382,7 @@ export function createFishing({ scene, fx, player, canvas, camera }) {
           castLbl.classList.toggle('bad', !zone || !okTier);
           castLbl.replaceChildren(
             ...(zone
-              ? [itemIc(bait), `${ZONES[zone].name}${okTier ? '' : ' · 낚싯대 등급 부족'}`]
+              ? [itemIc(bait), `${ZONES[zone].name}${okTier ? '' : boatNeedFor(zone) ? ' · 배가 필요해요' : ' · 낚싯대 등급 부족'}`]
               : [ic('close'), '여긴 땅이에요. 물 쪽을 보세요']),
           );
         }

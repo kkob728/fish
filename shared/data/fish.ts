@@ -108,6 +108,40 @@ export const FISH: FishSpecies[] = [
   F('ventsturgeon', '열수구 철갑어', 'hotspring', 'epic', [10, 80], 900, ['sulfur', 'shell', 'meat'], 260, ['sturgeon', '#4a3a30', '#b08060', 'spots', '#ff8040'], { desc: '열수구 옆에서 수백 년을 살았다.' }),
   F('redscale', '적룡 비늘고기', 'hotspring', 'legendary', [10, 40], 3800, ['sulfur', 'meat', 'glow'], 160, ['arowana', '#c02020', '#ffb080', 'none', '#000', '#ffd040'], { desc: '용암 속을 헤엄쳤다는 전설의 붉은 비늘.' }),
   F('phoenixcarp', '불사조 잉어', 'hotspring', 'mythic', [8, 30], 18000, ['sulfur', 'fruit', 'glow'], 140, ['veil', '#ff6020', '#ffe080', 'dots', '#fff0a0', '#ff2040'], { time: ['dawn', 'dusk'], desc: '해가 뜨고 질 때 온천에서 다시 태어난다는 불꽃 지느러미.' }),
+
+  // ───── 산호초 (나룻배 이상) ─────
+  F('damsel', '자리돔', 'reef', 'common', [0.03, 0.15], 10, ['shrimp', 'paste'], 12, ['perch', '#3a5aa8', '#d8e4f0', 'none', '#000', '#2a4a90'], { desc: '산호 사이를 떼 지어 맴도는 파란 점들.' }),
+  F('clownfish', '흰동가리', 'reef', 'common', [0.02, 0.1], 12, ['shrimp', 'fruit'], 11, ['perch', '#f07020', '#ffffff', 'bands', '#ffffff', '#f08030'], { desc: '말미잘 집을 지키는 주황 줄무늬.' }),
+  F('butterflyfish', '나비고기', 'reef', 'uncommon', [0.1, 0.5], 55, ['shell', 'shrimp'], 20, ['perch', '#f0d040', '#fff8d0', 'stripes', '#2a2a2a', '#f0c020'], { desc: '꼬리 쪽 검은 점이 눈처럼 보여 천적을 속인다.' }),
+  F('parrotfish', '파랑비늘돔', 'reef', 'rare', [1, 9], 240, ['shell', 'fruit'], 80, ['carp', '#30a8a0', '#a8e8d8', 'patches', '#f080c0', '#40c0b0'], { desc: '산호를 갉아 먹고 하얀 모래를 만든다.' }),
+  F('lionfish', '쏠배감펭', 'reef', 'epic', [0.3, 1.3], 800, ['shrimp', 'cut'], 40, ['perch', '#c8402a', '#f8e8d8', 'bands', '#ffffff', '#e05a40'], { desc: '화려한 지느러미 끝마다 독가시가 숨어 있다.' }),
+  F('napoleon', '나폴레옹피시', 'reef', 'legendary', [20, 190], 3600, ['shell', 'shrimp', 'meat'], 230, ['carp', '#2a8a7a', '#80d0b8', 'wavy', '#a8f0e0', '#3aa090'], { desc: '이마가 혹처럼 솟은 산호초의 현자.' }),
+
+  // ───── 먼바다 (통통배 이상) ─────
+  F('flyingfish', '날치', 'open', 'common', [0.1, 0.5], 14, ['shrimp', 'insect'], 30, ['flying', '#3a6ab0', '#f0f4f8', 'none', '#000', '#8ab8f0'], { desc: '가슴지느러미를 펴고 파도 위를 백 미터나 난다.' }),
+  F('bonito', '가다랑어', 'open', 'common', [2, 15], 18, ['cut', 'lure', 'shrimp'], 90, ['tuna', '#2a3a6a', '#e8eef4', 'stripes', '#3a4a7a'], { desc: '배에 검은 줄이 있는 먼바다의 떼고기.' }),
+  F('mahimahi', '만새기', 'open', 'uncommon', [3, 20], 85, ['cut', 'lure'], 120, ['salmon', '#3aa040', '#f0e040', 'dots', '#2a6a2a', '#40a0e0'], { desc: '물 밖으로 나오면 금빛에서 은빛으로 색이 바뀐다.' }),
+  F('wahoo', '꼬치삼치', 'open', 'rare', [8, 40], 380, ['lure', 'cut'], 160, ['pike', '#2a4a7a', '#d8e0ec', 'bands', '#4a6aa0'], { desc: '시속 80킬로미터로 미끼를 낚아챈다.' }),
+  F('swordfish', '황새치', 'open', 'epic', [40, 400], 1100, ['cut', 'meat', 'lure'], 400, ['gar', '#2a3a5a', '#c8d0dc', 'none', '#000', '#3a4a6a'], { desc: '칼 같은 주둥이로 물을 가른다.' }),
+  F('marlin', '청새치', 'open', 'legendary', [80, 600], 4200, ['meat', 'lure'], 450, ['gar', '#1a3a7a', '#e0e8f4', 'bands', '#6ab0ff', '#2a4a9a'], { desc: '돛 같은 등지느러미를 펴고 수면을 박차 오른다.' }),
+  F('seadragon', '먼바다 해룡', 'open', 'mythic', [150, 600], 22000, ['meat', 'glow'], 1200, ['dragon', '#1a5a8a', '#a8e0f0', 'spots', '#e0ffff', '#40a0d0'], { weather: ['storm'], desc: '폭풍이 몰아치는 먼바다에서만 수면 위로 머리를 든다.' }),
+
+  // ───── 얼음 바다 (통통배 이상) ─────
+  F('cod', '대구', 'ice', 'common', [1, 12], 18, ['cut', 'shrimp', 'worm'], 100, ['salmon', '#8a7a5a', '#e8e0d0', 'spots', '#5a4a30'], { desc: '입이 커서 이름도 대구. 겨울 바다의 맛.' }),
+  F('atka', '임연수어', 'ice', 'common', [0.3, 1.5], 15, ['shrimp', 'cut'], 45, ['minnow', '#c8a830', '#f0ecd8', 'bands', '#4a4020'], { desc: '껍질이 맛있어 껍질만 벗겨 먹는다는 말이 있다.' }),
+  F('arcticchar', '북극곤들매기', 'ice', 'uncommon', [1, 8], 90, ['insect', 'shrimp', 'lure'], 80, ['salmon', '#3a5060', '#f08040', 'dots', '#f0e0d0'], { desc: '얼음 밑에서 붉은 배를 반짝인다.' }),
+  F('icefish', '얼음고기', 'ice', 'rare', [0.5, 2.5], 420, ['shrimp', 'glow'], 50, ['pike', '#d8eef4', '#ffffff', 'none', '#000', '#c0e8f0'], { desc: '피가 투명해서 몸이 유리처럼 비친다.' }),
+  F('bighalibut', '대왕넙치', 'ice', 'epic', [20, 200], 1300, ['cut', 'meat'], 250, ['flat', '#5a5040', '#f0ece0', 'spots', '#3a3020'], { desc: '문짝만 한 넙치. 바닥에 붙으면 꿈쩍도 안 한다.' }),
+  F('greenlandshark', '그린란드상어', 'ice', 'legendary', [200, 1000], 4600, ['meat', 'cut'], 600, ['shark', '#4a4a50', '#8a8a90', 'spots', '#3a3a40'], { desc: '수백 년을 산다는 차가운 바다의 느림보.' }),
+
+  // ───── 해구 (원양 어선) ─────
+  F('lanternfish', '샛비늘치', 'trench', 'common', [0.01, 0.05], 20, ['glow', 'shrimp'], 8, ['minnow', '#2a3040', '#5a6070', 'dots', '#80f0ff'], { desc: '밤마다 수천 미터를 오르내리는 작은 등불.' }),
+  F('hatchetfish', '도끼고기', 'trench', 'common', [0.02, 0.1], 22, ['glow', 'shrimp'], 8, ['perch', '#a8b0c0', '#e8f0ff', 'dots', '#80c0ff'], { desc: '배 아래 빛으로 자기 그림자를 지운다.' }),
+  F('viperfish', '독사고기', 'trench', 'uncommon', [0.1, 0.5], 140, ['glow', 'cut'], 30, ['pike', '#1a2030', '#3a4a60', 'dots', '#60e0ff'], { desc: '입을 다물 수 없을 만큼 이빨이 길다.' }),
+  F('gulper', '풍선장어', 'trench', 'rare', [0.5, 4], 520, ['glow', 'meat'], 180, ['eel', '#101018', '#2a2a3a', 'dots', '#ff60a0'], { desc: '몸보다 큰 입으로 무엇이든 삼킨다.' }),
+  F('coelacanth', '실러캔스', 'trench', 'epic', [30, 110], 1600, ['glow', 'cut', 'meat'], 200, ['arowana', '#2a3a5a', '#5a6a8a', 'spots', '#e0e8f0'], { desc: '4억 년 전 모습 그대로인 살아 있는 화석.' }),
+  F('trenchking', '해구의 붉은 눈', 'trench', 'legendary', [300, 1500], 5200, ['glow', 'meat'], 700, ['angler', '#0a0a12', '#2a1a3a', 'dots', '#ff4060', '#200a20'], { time: ['night'], desc: '빛이 닿지 않는 해구 바닥에서 붉은 등불을 흔든다.' }),
+  F('megalodon', '메갈로돈', 'trench', 'mythic', [2000, 9000], 30000, ['meat'], 1600, ['shark', '#2a2e38', '#5a5e68', 'none', '#000', '#1a1e28'], { desc: '멸종한 줄 알았던 거대 상어. 해구 깊은 곳에 아직 살아 있다.' }),
 ];
 
 export const FISH_BY_ID: Record<string, FishSpecies> = Object.fromEntries(FISH.map((f) => [f.id, f]));

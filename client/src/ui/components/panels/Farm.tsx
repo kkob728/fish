@@ -9,7 +9,7 @@ import { ITEMS } from '../../../../../shared/data/items.ts';
 import { CROPS, CROP, PLOT_SIZES, EXPAND_PRICE, TILE_GRID, tileActive, growthAt, isWet, minutesLeft, seedOf } from '../../../../../shared/data/crops.ts';
 
 let picked: string | null = null; // 고른 작물 (패널을 닫아도 기억)
-const KIND_NAME = { food: '요리 재료', bait: '미끼 재료', sale: '팔기용' };
+const KIND_NAME = { food: '요리 재료', bait: '미끼 재료', sale: '팔기용', special: '바다에서 온 특별 작물' };
 
 function useTick(ms: number) {
   const [, set] = useState(0);

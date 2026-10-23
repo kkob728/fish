@@ -155,6 +155,8 @@ export function setupTouch({ canvas, player, fishing, onInteract }) {
       // 패널이 열려 있으면 조작 버튼 숨김
       const hidden = !!S.panelOpen || S.cooking;
       actBtn.style.display = jumpBtn.style.display = hidden ? 'none' : '';
+      const jl = S.ride ? '닻' : '점프';
+      if (jumpBtn.textContent !== jl) jumpBtn.textContent = jl;
     },
   };
 }

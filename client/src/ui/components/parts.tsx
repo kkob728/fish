@@ -246,7 +246,7 @@ export function RodRows({ shop }: { shop: boolean }) {
       {RODS.filter((r) => shop || S.me.rods.includes(r.id)).map((r) => {
         const owned = S.me.rods.includes(r.id);
         const equipped = S.me.rod === r.id;
-        const zones = ZONE_ORDER.filter((z) => ZONES[z].minRod <= r.tier).map((z) => ZONES[z].name);
+        const zones = ZONE_ORDER.filter((z) => ZONES[z].minRod <= r.tier && !ZONES[z].boat).map((z) => ZONES[z].name);
         return (
           <div key={r.id} class={`row-item${!owned && shop && (r.crafted || S.me.money < r.price) ? ' no' : ''}`}>
             <Icon name="rod" />

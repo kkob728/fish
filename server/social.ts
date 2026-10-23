@@ -4,11 +4,17 @@ import { WEATHERS } from '../shared/data/core.ts';
 import { pickWeighted, randInt } from '../shared/rng.ts';
 import { type Handler, now, world, send, broadcast, sysChat } from './core.ts';
 import { onWeather } from './farm.ts';
+import { boatsOnWeather } from './boats.ts';
 
 const state: Handler = (s, m) => {
   const x = Number(m.x), z = Number(m.z), y = Number(m.y), ry = Number(m.ry);
   if (![x, y, z, ry].every(Number.isFinite)) return;
-  if (Math.abs(x) > 260 || Math.abs(z) > 260) return;
+  if (Math.abs(x) > 700 || Math.abs(z) > 700) return;
+  // 배에 탄 사람은 위치를 배가 정함. 바라보는 방향만 받음
+  if (s.boat) {
+    s.ry = ry;
+    return;
+  }
   const t = now();
   const dt = Math.max(0.05, (t - (s.lastState || t)) / 1000);
   s.lastState = t;
@@ -68,5 +74,6 @@ export function rollWeather(first = false) {
   broadcast('weather', { weather: world.weather });
   if (!first && id !== prev) sysChat(`날씨가 ${WEATHERS[id].name}(으)로 바뀌었어요.`, null, 'weather');
   onWeather();
+  boatsOnWeather();
   setTimeout(() => rollWeather(), world.weather.until - now());
 }

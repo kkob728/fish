@@ -245,6 +245,106 @@ test('텃밭: 빌리기 → 심기 → 물 주기 → 거두기, 마른 땅은 �
   assert.equal((await A.wait('farmDone')).n, 8, '9칸 중 수박 1칸 빼고');
 });
 
+test('배: 조선소에서 사고 꾸미기 → 부두에서 띄우기 → 함께 타기 → 구역 제한 → 닻 내리고 낚시 → 내리기', async () => {
+  const core = await import('../server/core.ts');
+  const { boats } = await import('../server/boats.ts');
+  const { SHIPYARD, DOCK, SEA } = await import('../shared/sea.ts');
+  const pa = player('테스트A');
+  const sa = core.sessions.get(pa.id);
+  const sb = core.sessions.get(player('테스트B').id);
+  const at = (s, x, z) => {
+    s.x = x;
+    s.z = z;
+  };
+  // 조선소에서 사기
+  at(sa, 0, 0);
+  A.msg('buyBoat', { tier: 1 });
+  assert.match((await A.wait('toast')).text, /조선소/);
+  at(sa, SHIPYARD.x, SHIPYARD.z);
+  pa.money = 5000;
+  A.msg('buyBoat', { tier: 1 });
+  await A.wait('toast');
+  assert.equal(pa.boat.tier, 1);
+  assert.equal(pa.money, 2000);
+  A.msg('boatStyle', { color: '#3a7ab8', name: '물비늘호' });
+  await A.wait('toast');
+  assert.equal(pa.boat.name, '물비늘호');
+
+  // 부두 끝에서 띄우기, B가 함께 탐
+  A.msg('boatLaunch');
+  assert.match((await A.wait('toast')).text, /부두 끝/);
+  at(sa, DOCK.x - 4, DOCK.z);
+  A.msg('boatLaunch');
+  assert.equal((await A.wait('ride')).owner, pa.id);
+  at(sb, DOCK.x - 4, DOCK.z + 1);
+  B.msg('boatBoard', { owner: pa.id });
+  assert.equal((await B.wait('ride')).seat, 1);
+  const boat = boats.get(pa.id);
+  assert.deepEqual(boat.seats, [pa.id, player('테스트B').id]);
+
+  // 순간이동은 되돌림, 정상 이동은 받아들이고 손님 위치도 따라감
+  A.msg('boatSt', { x: DOCK.x, z: DOCK.z + 200, ry: 0, v: 6 });
+  await A.wait('boatFix');
+  timeShift += 1000;
+  A.msg('boatSt', { x: DOCK.x, z: DOCK.z + 5, ry: 0, v: 6 });
+  await sleep(20);
+  assert.equal(boat.z, DOCK.z + 5);
+  assert.ok(Math.abs(sb.z - boat.z) < 2);
+
+  // 나룻배는 먼바다로 못 나감
+  boat.x = 0;
+  boat.z = SEA.near - 2;
+  timeShift += 1000;
+  A.msg('boatSt', { x: 0, z: SEA.near + 3, ry: 0, v: 6 });
+  await A.wait('boatFix');
+
+  // 산호초 한가운데로 옮겨서: 움직이는 중엔 못 던지고, 닻을 내리면 됨
+  boat.x = SEA.reef.x - 30;
+  boat.z = SEA.reef.z - 30;
+  timeShift += 1000;
+  A.msg('boatSt', { x: boat.x + 2, z: boat.z, ry: 0, v: 2 });
+  await sleep(20);
+  B.msg('cast', { x: sb.x + 6, z: sb.z, bait: null });
+  assert.match((await B.wait('castFail')).reason, /닻/);
+  A.msg('boatAnchor', { on: true });
+  await A.wait('boat');
+  B.msg('cast', { x: sb.x + 6, z: sb.z, bait: null });
+  assert.equal((await B.wait('castOk')).zone, 'reef');
+  // 닻을 올리면 손님 낚시는 끝남
+  A.msg('boatAnchor', { on: false });
+  assert.equal((await B.wait('lost')).reason, 'boat');
+
+  // 바다 한가운데서는 못 내림, 부두 옆에서 선장이 내리면 모두 내리고 배는 사라짐
+  A.msg('boatLeave');
+  assert.match((await A.wait('toast')).text, /육지/);
+  // 작은 섬 옆에서 선장이 내리면 배는 닻을 내린 채 남고, 다시 타면 선장 자리로
+  const { ISLETS } = await import('../shared/sea.ts');
+  const isl = ISLETS[0];
+  boat.x = isl.x;
+  boat.z = isl.z - isl.r - 7;
+  boat.anchored = false;
+  timeShift += 1000;
+  A.msg('boatSt', { x: boat.x, z: boat.z + 0.5, ry: 0, v: 0 });
+  await sleep(20);
+  A.msg('boatLeave');
+  await A.wait('teleport');
+  assert.equal(sa.boat, null);
+  assert.ok(boats.has(pa.id) && boat.anchored);
+  assert.equal(sb.boat, pa.id, '손님은 그대로 탐');
+  A.msg('boatBoard', { owner: pa.id });
+  assert.equal((await A.wait('ride')).seat, 0);
+  boat.x = DOCK.x;
+  boat.z = DOCK.z;
+  timeShift += 1000;
+  A.msg('boatSt', { x: DOCK.x, z: DOCK.z + 0.5, ry: 0, v: 0 });
+  await sleep(20);
+  A.msg('boatLeave');
+  await A.wait('boatGone');
+  assert.equal(boats.has(pa.id), false);
+  assert.equal(sa.boat, null);
+  assert.equal(sb.boat, null);
+});
+
 test('저장 후 다시 불러와도 진행 상황이 남음', async () => {
   await db.flushDb();
   const before = JSON.stringify(player('테스트A').dishes);

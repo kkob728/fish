@@ -558,3 +558,15 @@ body.touch .hotbar .slot .ico { width: 32px; height: 32px; }
   .ftile .fnm { font-size: 11px; }
   .ftile .fst { font-size: 10px; }
 }
+
+/* ---------- 배 ---------- */
+.boatbar { position: absolute; left: 50%; bottom: 96px; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; padding: 5px 14px; font-family: var(--font-title); color: #fff4d6; font-size: 15px; white-space: nowrap; }
+.boatbar .ico { width: 22px; height: 22px; }
+.boatbar .anc { display: inline-flex; align-items: center; gap: 3px; opacity: 0.75; }
+.boatbar .anc.on { opacity: 1; color: #ffe08a; }
+.boatbar .muted-l { opacity: 0.7; font-size: 13px; }
+.boat-style { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.boat-style input { width: 180px; padding: 6px 10px; }
+@media (max-height: 520px) {
+  .boatbar { bottom: 74px; font-size: 13px; padding: 3px 10px; }
+}

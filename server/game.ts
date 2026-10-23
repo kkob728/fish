@@ -9,6 +9,7 @@ import { socialHandlers, rollWeather } from './social.ts';
 import { cooking, cookingHandlers } from './cooking.ts';
 import { trade, tradeHandlers } from './trade.ts';
 import { farmHandlers, farmList } from './farm.ts';
+import { boatHandlers, boatList, boatsOnLeave, boatSnap } from './boats.ts';
 
 const HANDLERS: Record<string, Handler> = {
   ...socialHandlers,
@@ -18,6 +19,7 @@ const HANDLERS: Record<string, Handler> = {
   ...cookingHandlers,
   ...tradeHandlers,
   ...farmHandlers,
+  ...boatHandlers,
 };
 
 export function onConnection(ws) {
@@ -74,6 +76,8 @@ function hello(ws, m, helloTimeout): Session | null {
   clearTimeout(helloTimeout);
   let pos = p.pos;
   if (!pos || walkHeight(pos.x, pos.z) == null) pos = { x: POI.spawn.x, z: POI.spawn.z };
+  // 바다의 작은 섬에서 접속이 끊겼으면 (배는 거둬졌으니) 부두 끝에서 시작
+  else if (Math.hypot(pos.x, pos.z) > 240) pos = { x: PIER.x, z: PIER.z1 - 8 };
   const s: Session = { ws, p, x: pos.x, z: pos.z, y: walkHeight(pos.x, pos.z) ?? 3, ry: 0, a: 0, fs: null, buffs: [], trade: null, dirtyFish: false };
   sessions.set(p.id, s);
   send(s, 'welcome', {
@@ -86,6 +90,7 @@ function hello(ws, m, helloTimeout): Session | null {
     records: getDb().records,
     stations: cooking.list(),
     farms: farmList(),
+    boats: boatList(),
     pos: { x: s.x, y: s.y, z: s.z },
   });
   sendBuffs(s);
@@ -97,6 +102,7 @@ function hello(ws, m, helloTimeout): Session | null {
 function onClose(s: Session) {
   if (sessions.get(s.p.id) !== s) return;
   clearFishing(s, false);
+  boatsOnLeave(s);
   trade.onLeave(s);
   cooking.onLeave(s);
   sessions.delete(s.p.id);
@@ -124,7 +130,7 @@ function snapshot() {
       fs ? Math.round(fs.bz * 10) / 10 : 0,
     ]);
   }
-  if (list.length) broadcast('snap', { time: t, p: list });
+  if (list.length) broadcast('snap', { time: t, p: list, b: boatSnap() });
 }
 
 export function startGame() {

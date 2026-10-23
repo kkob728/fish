@@ -25,6 +25,8 @@ export interface Session {
   lastState?: number;
   showUntil?: number;
   showFish?: unknown;
+  boat?: string | null; // 타고 있는 배 (주인 id)
+  seat?: number;
 }
 export type Handler = (s: Session, m: any) => void;
 

@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { terrainHeight, WORLD_SIZE, POI, riverDist, shoreRadius, PIER } from '../../../shared/world.ts';
+import { SEA, seaZone } from '../../../shared/sea.ts';
 import { fbm, hash2, clamp } from '../../../shared/rng.ts';
 import { FARM, PLOT_PITCH, inFarm } from '../../../shared/data/crops.ts';
 
@@ -22,7 +23,7 @@ const PAL = {
 };
 
 const tmp = new THREE.Color();
-function terrainColor(x, h, z, ny) {
+export function terrainColor(x, h, z, ny) {
   const n = fbm(x * 0.05, z * 0.05, 2, 77);
   const j = hash2(Math.floor(x * 3), Math.floor(z * 3), 5) * 0.08 - 0.04;
   const dSwamp = Math.hypot(x - POI.swamp.x, z - POI.swamp.z);
@@ -106,8 +107,19 @@ const ZONE_TINT = {
   swamp: C('#4e5c26'),
   deep: C('#0b2c70'),
   hotspring: C('#d58a4a'),
+  reef: C('#18b8c0'),
+  open: C('#0a2a80'),
+  ice: C('#4a8ab0'),
+  trench: C('#120c38'),
 };
 function tintAt(x, z) {
+  if (Math.hypot(x, z) > 250) {
+    const sz = seaZone(x, z);
+    if (sz === 'reef') return ZONE_TINT.reef;
+    if (sz === 'ice') return ZONE_TINT.ice;
+    if (sz === 'trench') return tmp.copy(ZONE_TINT.trench).lerp(ZONE_TINT.deep, clamp((Math.hypot(x - SEA.trench.x, z - SEA.trench.z) - SEA.trench.r * 0.7) / (SEA.trench.r * 0.3), 0, 1));
+    if (sz === 'open') return tmp.copy(ZONE_TINT.deep).lerp(ZONE_TINT.open, clamp((Math.hypot(x, z) - SEA.near) / 40, 0, 1));
+  }
   if (Math.hypot(x - POI.hotspring.x, z - POI.hotspring.z) < 26) return ZONE_TINT.hotspring;
   if (Math.hypot(x - POI.lake.x, z - POI.lake.z) < 62) return ZONE_TINT.lake;
   if (Math.hypot(x - POI.swamp.x, z - POI.swamp.z) < POI.swamp.r + 6) return ZONE_TINT.swamp;
@@ -118,13 +130,13 @@ function tintAt(x, z) {
 }
 
 export const WATER_TEX_SIZE = 256;
-export function buildWaterData() {
-  const N = WATER_TEX_SIZE;
+export const SEA_TEX_WORLD = 1400;
+export function buildWaterData(N = WATER_TEX_SIZE, size = WORLD_SIZE) {
   const data = new Uint8Array(N * N * 4);
   for (let j = 0; j < N; j++) {
     for (let i = 0; i < N; i++) {
-      const x = (i / (N - 1) - 0.5) * WORLD_SIZE;
-      const z = (j / (N - 1) - 0.5) * WORLD_SIZE;
+      const x = (i / (N - 1) - 0.5) * size;
+      const z = (j / (N - 1) - 0.5) * size;
       const h = terrainHeight(x, z);
       const c = tintAt(x, z);
       const k = (j * N + i) * 4;

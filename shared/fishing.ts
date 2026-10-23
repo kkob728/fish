@@ -104,7 +104,7 @@ export function fishLength(f: FishSpecies, weight: number) {
 }
 
 // 지역별 값 배수 — 깊고 어려운 곳일수록 비싸다
-export const ZONE_VALUE: Record<string, number> = { lake: 2, river: 2, coast: 2, swamp: 2.5, deep: 3, hotspring: 3 };
+export const ZONE_VALUE: Record<string, number> = { lake: 2, river: 2, coast: 2, swamp: 2.5, deep: 3, hotspring: 3, reef: 3, open: 3.5, ice: 3.5, trench: 4 };
 // 입질까지 기다리는 시간(초), 미끼/버프의 입질 배수를 곱해서 씀
 export function biteWaitSeconds(rand = Math.random) {
   return 5 + rand() * 11;

@@ -13,6 +13,9 @@ export interface ClientState {
   pos: { x: number; y: number; z: number };
   stations: Map<string, any>;
   farms: Map<number, any>;
+  boats: Map<string, any>;
+  ride: { owner: string; seat: number } | null;
+  rideInfo: { v: number; anchored: boolean; name: string; tier: number; captain: boolean } | null;
   cooking: boolean;
   tradeOpen?: boolean;
 }
@@ -29,6 +32,9 @@ export const S: ClientState = {
   pos: { x: 0, y: 0, z: 0 },
   stations: new Map(), // owner -> 조리대 데이터
   farms: new Map(), // 밭 번호 -> 텃밭 데이터
+  boats: new Map(), // 주인 id -> 띄워진 배
+  ride: null, // 내가 탄 배와 자리
+  rideInfo: null, // 탄 배의 속도·닻 (HUD용)
   cooking: false, // 요리 미니게임 중
 };
 

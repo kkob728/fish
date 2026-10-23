@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { WORLD_SIZE } from '../../../shared/world.ts';
-import { buildWaterData } from './terrain.ts';
+import { buildWaterData, SEA_TEX_WORLD } from './terrain.ts';
 
 const vertex = /* glsl */ `
 uniform float uTime;
@@ -25,7 +25,9 @@ void main() {
 
 const fragment = /* glsl */ `
 uniform sampler2D uMap;
+uniform sampler2D uMapFar;
 uniform float uWorld;
+uniform float uWorldFar;
 uniform float uTime;
 uniform vec3 uSunDir;
 uniform vec3 uSunColor;
@@ -44,9 +46,14 @@ float noise(vec2 p) {
 void main() {
   vec2 uv = vWorld.xz / uWorld + 0.5;
   vec4 t = texture2D(uMap, clamp(uv, 0.0, 1.0));
-  float outside = step(1.0, max(abs(uv.x - 0.5), abs(uv.y - 0.5)) * 2.0);
-  float depth = mix(t.a * 10.0, 10.0, outside);
-  vec3 deepCol = mix(t.rgb, vec3(0.04, 0.17, 0.44), outside);
+  // 섬 지도 바깥은 먼 바다 지도, 그것도 벗어나면 깊은 바다
+  float near = 1.0 - step(1.0, max(abs(uv.x - 0.5), abs(uv.y - 0.5)) * 2.0);
+  vec2 uvf = vWorld.xz / uWorldFar + 0.5;
+  vec4 tf = texture2D(uMapFar, clamp(uvf, 0.0, 1.0));
+  float outside = step(1.0, max(abs(uvf.x - 0.5), abs(uvf.y - 0.5)) * 2.0);
+  t = mix(mix(tf, vec4(0.04, 0.17, 0.44, 1.0), outside), t, near);
+  float depth = t.a * 10.0;
+  vec3 deepCol = t.rgb;
 
   vec2 q = vWorld.xz * 0.55;
   float n1 = noise(q + uTime * 0.45) - 0.5;
@@ -83,6 +90,8 @@ export function buildWater() {
       uTime: { value: 0 },
       uMap: { value: null },
       uWorld: { value: WORLD_SIZE },
+      uMapFar: { value: null },
+      uWorldFar: { value: SEA_TEX_WORLD },
       uSunDir: { value: new THREE.Vector3(0, 1, 0) },
       uSunColor: { value: new THREE.Color('#ffffff') },
       uSkyColor: { value: new THREE.Color('#9fd0ff') },
@@ -90,8 +99,10 @@ export function buildWater() {
     },
   ]);
   uniforms.uMap.value = buildWaterData();
+  uniforms.uMapFar.value = buildWaterData(192, SEA_TEX_WORLD);
   const mat = new THREE.ShaderMaterial({ uniforms, vertexShader: vertex, fragmentShader: fragment, transparent: true, fog: true });
-  const geo = new THREE.PlaneGeometry(1400, 1400, 260, 260);
+  // 카메라를 따라다니는 물 (먼 바다까지 끝없이 보이게)
+  const geo = new THREE.PlaneGeometry(1200, 1200, 220, 220);
   geo.rotateX(-Math.PI / 2);
   const mesh = new THREE.Mesh(geo, mat);
   mesh.renderOrder = 1;

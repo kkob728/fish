@@ -1,7 +1,9 @@
 // 섬 지형/지역/채집 노드 — 서버와 클라이언트가 똑같이 계산한다.
 import { fbm, mulberry32, smoothstep, lerp, clamp } from './rng.ts';
 import { FARM, inFarm } from './data/crops.ts';
+import { seaHeight, seaZone, isletAt, ISLETS, SEA } from './sea.ts';
 
+export { ISLETS, SEA };
 export const WORLD_SIZE = 520; // 지형 메시 한 변 길이
 export const WATER_LEVEL = 0;
 
@@ -117,6 +119,9 @@ export function terrainHeight(x, z) {
   const fd = Math.max(fx, fz);
   if (fd < 4) h = lerp(h, FARM.h, smoothstep(4, 0, fd));
 
+  // 섬 바깥 바다 (작은 섬, 산호초)
+  if (s < -40) h = seaHeight(x, z, h);
+
   return h;
 }
 
@@ -129,7 +134,7 @@ export function walkHeight(x, z) {
   const h = terrainHeight(x, z);
   if (onPier(x, z)) return Math.max(h, PIER.deck);
   if (h < -0.75) return null;
-  if (Math.hypot(x, z) > 240) return null;
+  if (Math.hypot(x, z) > 240 && !isletAt(x, z)) return null;
   return Math.max(h, -0.75);
 }
 
@@ -140,8 +145,13 @@ export const ZONES = {
   swamp: { id: 'swamp', name: '안개 늪', minRod: 2, color: '#9fbf6a' },
   deep: { id: 'deep', name: '심해', minRod: 3, color: '#5a78ff' },
   hotspring: { id: 'hotspring', name: '화산 온천', minRod: 4, color: '#ff8a5a' },
-};
-export const ZONE_ORDER = ['lake', 'river', 'coast', 'swamp', 'deep', 'hotspring'];
+  // 배로만 가는 곳 (boat: 필요한 배 등급)
+  reef: { id: 'reef', name: '산호초', minRod: 1, boat: 1, color: '#4ae0d0' },
+  open: { id: 'open', name: '먼바다', minRod: 2, boat: 2, color: '#3a8ae8' },
+  ice: { id: 'ice', name: '얼음 바다', minRod: 2, boat: 2, color: '#b8e8ff' },
+  trench: { id: 'trench', name: '해구', minRod: 3, boat: 3, color: '#4a3a8a' },
+} as Record<string, { id: string; name: string; minRod: number; boat?: number; color: string }>;
+export const ZONE_ORDER = ['lake', 'river', 'coast', 'swamp', 'deep', 'hotspring', 'reef', 'open', 'ice', 'trench'];
 
 export function isWater(x, z) {
   return terrainHeight(x, z) < WATER_LEVEL - 0.15;
@@ -155,6 +165,8 @@ export function zoneAt(x, z) {
   const d = Math.hypot(x, z);
   if (riverDist(x, z) < RIVER_HALF * 2.2 && d < shoreRadius(x, z) + 4) return 'river';
   if (Math.hypot(x - POI.swamp.x, z - POI.swamp.z) < POI.swamp.r + 6) return 'swamp';
+  const sz = d > 250 ? seaZone(x, z) : null;
+  if (sz) return sz;
   if (d > DEEP_RADIUS) return 'deep';
   return 'coast';
 }
@@ -162,6 +174,13 @@ export function zoneAt(x, z) {
 // 플레이어 위치 기준 지역 이름(HUD 표시용) — 땅 위면 가장 가까운 지역 느낌으로
 export function regionNameAt(x, z) {
   if (onPier(x, z)) return '긴 부두';
+  if (Math.hypot(x, z) > 250) {
+    const isl = isletAt(x, z, 4);
+    if (isl) return isl.name;
+    const sz = seaZone(x, z);
+    if (sz) return ZONES[sz].name;
+    return Math.hypot(x, z) > DEEP_RADIUS ? ZONES.deep.name : ZONES.coast.name;
+  }
   if (inFarm(x, z, 2)) return '바람결 텃밭';
   if (Math.hypot(x - POI.camp.x, z - POI.camp.z) < 30) return '물비늘 캠프';
   if (Math.hypot(x - POI.hotspring.x, z - POI.hotspring.z) < 34) return ZONES.hotspring.name;

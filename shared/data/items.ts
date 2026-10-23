@@ -122,7 +122,7 @@ export const SHOP_STOCK = [
   { id: 'big_float', price: 100 },
   { id: 'tough_line', price: 140 },
   ...FOODS.map((f) => ({ id: f.id, price: f.price })),
-  ...CROPS.map((c) => ({ id: `seed_${c.id}`, price: c.seed })),
+  ...CROPS.filter((c) => c.kind !== 'special').map((c) => ({ id: `seed_${c.id}`, price: c.seed })),
 ];
 
 export const FISH_BAG_LIMIT = 60;

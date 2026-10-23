@@ -4,6 +4,9 @@ import { getDb } from './db.ts';
 import { ITEMS, NO_BAIT, FISH_BAG_LIMIT } from '../shared/data/items.ts';
 import { ROD, RARITY, VARIANT } from '../shared/data/core.ts';
 import { ZONES, zoneAt } from '../shared/world.ts';
+import { BOATS } from '../shared/sea.ts';
+import { SEA_SEED, SEA_SEED_CHANCE } from '../shared/data/crops.ts';
+import { boats } from './boats.ts';
 import { rollSpecies, rollVariant, rollSize, makeFishRecord, fightParams, minFightSeconds, biteWaitSeconds } from '../shared/fishing.ts';
 import type { Effects } from '../shared/fishing.ts';
 import { levelInfo, levelPerks, catchXp, MISS_XP } from '../shared/level.ts';
@@ -44,6 +47,12 @@ const cast: Handler = (s, m) => {
   const zone = zoneAt(x, z);
   if (!zone) return send(s, 'castFail', { reason: '찌가 땅에 떨어졌어요. 물 쪽으로 던지세요!' });
   const zdef = ZONES[zone];
+  const boat = s.boat ? boats.get(s.boat) : null;
+  if (boat && !boat.anchored) return send(s, 'castFail', { reason: '배가 움직이는 중이에요. 선장이 닻을 내려야 낚시할 수 있어요.' });
+  if (zdef.boat && (!boat || boat.tier < zdef.boat)) {
+    const need = BOATS[zdef.boat - 1];
+    return send(s, 'castFail', { reason: `${zdef.name}은(는) ${need.name} 이상을 타고 와야 해요.` });
+  }
   if (rod.tier < zdef.minRod) {
     const need = Object.values(ROD).find((r) => r.tier === zdef.minRod && !r.crafted);
     return send(s, 'castFail', { reason: `${zdef.name}은(는) ${need.name} 이상이 필요해요.` });
@@ -145,7 +154,7 @@ const fightEnd: Handler = (s, m) => {
   }
   const { f, size, variant } = fs.fish;
   clearFishing(s);
-  grantFish(s, f, size, variant);
+  grantFish(s, f, size, variant, fs.zone);
 };
 
 const tackle: Handler = (s, m) => {
@@ -164,7 +173,7 @@ const tackle: Handler = (s, m) => {
 // 채팅은 어두운 외곽선 위 밝은 글씨라 밝은 색을 씀
 const CHAT_COLOR = ['#e8e4dc', '#a8f090', '#9ccfff', '#dcb0ff', '#ffc070', '#ffa0dc'];
 
-function grantFish(s: Session, f: FishSpecies, size: { p: number; weight: number }, variant: string | null) {
+function grantFish(s: Session, f: FishSpecies, size: { p: number; weight: number }, variant: string | null, zone: string) {
   const p = s.p;
   const rec = makeFishRecord(f, size, variant, { uid: crypto.randomBytes(5).toString('hex'), t: now(), by: p.name });
   const rarity = RARITY[f.rarity];
@@ -199,9 +208,15 @@ function grantFish(s: Session, f: FishSpecies, size: { p: number; weight: number
   } else {
     p.fish.push(rec);
   }
+  // 바다 구역에서는 가끔 물고기 뱃속에서 특별한 씨앗이 나옴
+  let seed: string | null = null;
+  if (SEA_SEED[zone] && Math.random() < SEA_SEED_CHANCE) {
+    seed = SEA_SEED[zone];
+    p.items[seed] = (p.items[seed] || 0) + 1;
+  }
   markDirty();
   sendMe(s);
-  send(s, 'caught', { fish: rec, isNew, bonus, isRecord, autoSold });
+  send(s, 'caught', { fish: rec, isNew, bonus, isRecord, autoSold, seed });
   s.showUntil = now() + 4000;
   s.showFish = rec;
   broadcast('catchShow', { id: p.id, fish: rec }, s);

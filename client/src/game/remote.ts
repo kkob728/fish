@@ -113,6 +113,7 @@ export function createRemotes({ scene, fx }) {
         if (r.lastF < 2 && f >= 2) r.char.triggerCast();
         if (r.lastF >= 2 && f < 2 && f !== 5) fx.ripple(r.bobber.position.x, r.bobber.position.z);
         r.lastF = f;
+        r.char.setSeated(s1.a === 5);
         r.char.animate(anim, dt);
         r.fish?.update(dt);
 

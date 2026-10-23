@@ -128,7 +128,7 @@ export function buildCharacter(color = '#e86a4a', { name = '', npc = false, name
   }
   setName(name);
 
-  const anim = { phase: 0, castT: 0, t: 0, lean: 0 };
+  const anim = { phase: 0, castT: 0, t: 0, lean: 0, seated: false };
   const lerpA = (cur, target, k) => cur + (target - cur) * k;
 
   return {
@@ -143,6 +143,10 @@ export function buildCharacter(color = '#e86a4a', { name = '', npc = false, name
     },
     triggerCast() {
       anim.castT = 1;
+    },
+    // 배에 앉음: 다리를 앞으로 뻗음 (엉덩이 높이 0.78이 앉는 면에 오도록 root를 내려 둘 것)
+    setSeated(on: boolean) {
+      anim.seated = on;
     },
     // state: idle | walk | run | charge | wait | bite | fight | show, speed: 0..1
     animate(state, dt, speed = 0) {
@@ -190,6 +194,7 @@ export function buildCharacter(color = '#e86a4a', { name = '', npc = false, name
       armR.pivot.rotation.z = lerpA(armR.pivot.rotation.z, armRz, k);
       armL.pivot.rotation.x = lerpA(armL.pivot.rotation.x, aL, k);
       armL.pivot.rotation.z = lerpA(armL.pivot.rotation.z, state === 'show' ? 0.25 : -0.05, k);
+      if (anim.seated) lL = lR = -1.45;
       legL.rotation.x = lerpA(legL.rotation.x, lL, k);
       legR.rotation.x = lerpA(legR.rotation.x, lR, k);
       anim.lean = lerpA(anim.lean, lean, k);

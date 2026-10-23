@@ -162,6 +162,7 @@ export interface Profile {
   dishes?: Dish[];
   food?: FoodState | null;
   farm?: Farm | null;
+  boat?: { tier: number; color: string; name: string } | null;
 }
 
 export type PublicProfile = Omit<Profile, 'tokenHash'>;

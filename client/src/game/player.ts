@@ -34,6 +34,7 @@ export function createLocalPlayer({ scene, camera, canvas, me, start }) {
   // 터치 조이스틱 입력 (-1..1), 점프 요청
   const stick = { x: 0, y: 0 };
   let jumpReq = false;
+  let jumpHook: (() => boolean) | null = null; // 배에서는 점프 대신 닻
 
   addEventListener('keydown', (e) => {
     if (isTyping()) return;
@@ -115,14 +116,48 @@ export function createLocalPlayer({ scene, camera, canvas, me, start }) {
       camDist = Math.min(26, Math.max(3.5, camDist * factor));
     },
     jump() {
+      if (jumpHook?.()) return;
       jumpReq = true;
     },
+    setJumpHook(fn: () => boolean) {
+      jumpHook = fn;
+    },
+    // 키보드 + 조이스틱 이동 입력 (x 오른쪽, y 앞)
+    moveInput() {
+      let x = 0, y = 0;
+      if (!isTyping()) {
+        if (keys.has('KeyW') || keys.has('ArrowUp')) y += 1;
+        if (keys.has('KeyS') || keys.has('ArrowDown')) y -= 1;
+        if (keys.has('KeyD') || keys.has('ArrowRight')) x += 1;
+        if (keys.has('KeyA') || keys.has('ArrowLeft')) x -= 1;
+      }
+      if (Math.hypot(stick.x, stick.y) > 0.15) {
+        x += stick.x;
+        y -= stick.y;
+      }
+      return { x: Math.max(-1, Math.min(1, x)), y: Math.max(-1, Math.min(1, y)) };
+    },
     // locked: 파이팅 중엔 이동 불가, faceCam: 캐스팅 충전 중엔 카메라 방향을 봄
-    update(dt, { locked = false, faceCam = false, anim = null } = {}) {
+    // ride: 배에 탄 자리 {x,y,z,ry,seated,follow}. 있으면 걷지 않고 그 자리에 붙어 있음
+    update(dt, { locked = false, faceCam = false, anim = null, ride = null as any } = {}) {
       forward.set(-Math.sin(camYaw), 0, -Math.cos(camYaw));
       right.set(Math.cos(camYaw), 0, -Math.sin(camYaw));
       move.set(0, 0, 0);
-      if (!locked && !isTyping()) {
+      char.setSeated(!!ride?.seated);
+      if (ride) {
+        pos.set(ride.x, ride.y, ride.z);
+        vy = 0;
+        const faceYaw = faceCam ? Math.atan2(forward.x, forward.z) : anim ? yaw : ride.ry;
+        let d = faceYaw - yaw;
+        d = Math.atan2(Math.sin(d), Math.cos(d));
+        yaw += d * Math.min(1, dt * (faceCam ? 16 : 6));
+        // 배를 몰 때는 카메라가 천천히 배 뒤로 돌아감
+        if (ride.follow && !dragging) {
+          let c = ride.ry + Math.PI - camYaw;
+          c = Math.atan2(Math.sin(c), Math.cos(c));
+          camYaw += c * Math.min(1, dt * 1.2);
+        }
+      } else if (!locked && !isTyping()) {
         if (keys.has('KeyW') || keys.has('ArrowUp')) move.add(forward);
         if (keys.has('KeyS') || keys.has('ArrowDown')) move.sub(forward);
         if (keys.has('KeyD') || keys.has('ArrowRight')) move.add(right);
@@ -130,7 +165,7 @@ export function createLocalPlayer({ scene, camera, canvas, me, start }) {
         const sm = Math.hypot(stick.x, stick.y);
         if (sm > 0.15) move.addScaledVector(forward, -stick.y).addScaledVector(right, stick.x);
       }
-      moving = move.lengthSq() > 0;
+      moving = !ride && move.lengthSq() > 0;
       const run = keys.has('ShiftLeft') || keys.has('ShiftRight') || Math.hypot(stick.x, stick.y) > 0.92;
       const ground0 = walkHeight(pos.x, pos.z) ?? pos.y;
       const inWater = ground0 < -0.1 && terrainHeight(pos.x, pos.z) < -0.1 && pos.y < 0.2;
@@ -155,9 +190,9 @@ export function createLocalPlayer({ scene, camera, canvas, me, start }) {
         d = Math.atan2(Math.sin(d), Math.cos(d));
         yaw += d * Math.min(1, dt * 16);
       }
-      const ground = walkHeight(pos.x, pos.z) ?? pos.y;
+      const ground = ride ? pos.y : walkHeight(pos.x, pos.z) ?? pos.y;
       const grounded = pos.y <= ground + 0.02;
-      if (grounded && (keys.has('Space') || jumpReq) && !locked && !isTyping()) vy = 6.5;
+      if (!ride && grounded && (keys.has('Space') || jumpReq) && !locked && !isTyping()) vy = 6.5;
       jumpReq = false;
       vy -= 22 * dt;
       pos.y += vy * dt;
@@ -169,6 +204,7 @@ export function createLocalPlayer({ scene, camera, canvas, me, start }) {
       char.root.position.copy(pos);
       char.root.rotation.y = yaw;
       const st = anim || (moving ? (run ? 'run' : 'walk') : 'idle');
+      const camMin = ride ? ride.cam || 7 : 0;
       char.animate(st, dt);
       animState = st;
 
@@ -184,7 +220,9 @@ export function createLocalPlayer({ scene, camera, canvas, me, start }) {
         }
         return camDist;
       };
-      let pitch = camPitch;
+      let pitch = ride ? Math.max(camPitch, 0.42) : camPitch;
+      const camDistSave = camDist;
+      camDist = Math.max(camDist, camMin);
       let dist = clearDist(pitch);
       while (dist < camDist && pitch < 1.25) {
         pitch += 0.12;
@@ -194,6 +232,7 @@ export function createLocalPlayer({ scene, camera, canvas, me, start }) {
         pitch = camPitch;
         dist = Math.max(1.6, clearDist(camPitch));
       }
+      camDist = camDistSave;
       const k = Math.min(1, dt * 5);
       camCur = camCur == null ? dist : dist < camCur ? dist : camCur + (dist - camCur) * k;
       pitchCur = pitchCur == null ? pitch : pitchCur + (pitch - pitchCur) * k;
