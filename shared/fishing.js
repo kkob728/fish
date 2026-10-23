@@ -103,7 +103,7 @@ export function fishLength(f, weight) {
 export const ZONE_VALUE = { lake: 2, river: 2, coast: 2, swamp: 2.5, deep: 3, hotspring: 3 };
 // 입질까지 기다리는 시간(초), 미끼/버프의 입질 배수를 곱해서 씀
 export function biteWaitSeconds(rand = Math.random) {
-  return 2.5 + rand() * 5.5;
+  return 5 + rand() * 11;
 }
 
 export function fishPrice(f, p, variantId) {
