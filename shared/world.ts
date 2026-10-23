@@ -1,5 +1,6 @@
 // 섬 지형/지역/채집 노드 — 서버와 클라이언트가 똑같이 계산한다.
 import { fbm, mulberry32, smoothstep, lerp, clamp } from './rng.ts';
+import { FARM, inFarm } from './data/crops.ts';
 
 export const WORLD_SIZE = 520; // 지형 메시 한 변 길이
 export const WATER_LEVEL = 0;
@@ -110,6 +111,12 @@ export function terrainHeight(x, z) {
   const cr = Math.hypot(x - POI.camp.x, z - POI.camp.z);
   h = lerp(h, 3.0, smoothstep(30, 17, cr));
 
+  // 텃밭 평탄화 (사각형, 가장자리 4m는 부드럽게)
+  const fx = Math.abs(x - FARM.x) - FARM.w / 2;
+  const fz = Math.abs(z - FARM.z) - FARM.d / 2;
+  const fd = Math.max(fx, fz);
+  if (fd < 4) h = lerp(h, FARM.h, smoothstep(4, 0, fd));
+
   return h;
 }
 
@@ -155,6 +162,7 @@ export function zoneAt(x, z) {
 // 플레이어 위치 기준 지역 이름(HUD 표시용) — 땅 위면 가장 가까운 지역 느낌으로
 export function regionNameAt(x, z) {
   if (onPier(x, z)) return '긴 부두';
+  if (inFarm(x, z, 2)) return '바람결 텃밭';
   if (Math.hypot(x - POI.camp.x, z - POI.camp.z) < 30) return '물비늘 캠프';
   if (Math.hypot(x - POI.hotspring.x, z - POI.hotspring.z) < 34) return ZONES.hotspring.name;
   if (Math.hypot(x - POI.lake.x, z - POI.lake.z) < 64) return ZONES.lake.name;
@@ -198,7 +206,7 @@ function sampleNodes(type, count, seed, predicate) {
 
 const inland = (x, z) => shoreRadius(x, z) - Math.hypot(x, z);
 const distTo = (p, x, z) => Math.hypot(x - p.x, z - p.z);
-const notCamp = (x, z) => distTo(POI.camp, x, z) > 20;
+const notCamp = (x, z) => distTo(POI.camp, x, z) > 20 && !inFarm(x, z, 6);
 const notSwamp = (x, z) => distTo(POI.swamp, x, z) > POI.swamp.r + 4;
 const notMountain = (x, z) => distTo(POI.mountain, x, z) > 50;
 
@@ -234,6 +242,7 @@ export function propPlacements() {
       const dens = fbm(x * 0.03, z * 0.03, 2, 55);
       if (onPier(x, z) || Math.abs(x - PIER.x) < 6 && z > 110) continue;
       if (distTo(POI.camp, x, z) < 28) continue;
+      if (inFarm(x, z, 5)) continue;
       if (distTo(POI.hotspring, x, z) < 20) continue;
       const ins = inland(x, z);
       if (h < -0.2) {

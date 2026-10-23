@@ -8,6 +8,7 @@ import { shopHandlers } from './shop.ts';
 import { socialHandlers, rollWeather } from './social.ts';
 import { cooking, cookingHandlers } from './cooking.ts';
 import { trade, tradeHandlers } from './trade.ts';
+import { farmHandlers, farmList } from './farm.ts';
 
 const HANDLERS: Record<string, Handler> = {
   ...socialHandlers,
@@ -16,6 +17,7 @@ const HANDLERS: Record<string, Handler> = {
   ...shopHandlers,
   ...cookingHandlers,
   ...tradeHandlers,
+  ...farmHandlers,
 };
 
 export function onConnection(ws) {
@@ -83,6 +85,7 @@ function hello(ws, m, helloTimeout): Session | null {
     serverTime: now(),
     records: getDb().records,
     stations: cooking.list(),
+    farms: farmList(),
     pos: { x: s.x, y: s.y, z: s.z },
   });
   sendBuffs(s);

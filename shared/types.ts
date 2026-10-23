@@ -1,4 +1,5 @@
 // 게임 전체에서 쓰는 데이터 모양 — 서버·클라이언트 공용
+import type { Farm } from './data/crops.ts';
 export type RarityId = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary' | 'mythic';
 export type QualityId = 'small' | 'normal' | 'large' | 'trophy' | 'monster';
 export type PhaseId = 'dawn' | 'day' | 'dusk' | 'night';
@@ -68,8 +69,11 @@ export interface Item {
   vid?: string;
   // 식재료
   food?: boolean;
-  tags?: string[];
+  tags?: string[] | null;
   price?: number;
+  // 텃밭
+  seed?: string; // 씨앗이면 작물 id
+  home?: boolean; // 텃밭 수확물
 }
 
 /** 버프·미끼·낚싯대 효과 (부분 집합으로 씀) */
@@ -157,6 +161,7 @@ export interface Profile {
   recipes?: string[];
   dishes?: Dish[];
   food?: FoodState | null;
+  farm?: Farm | null;
 }
 
 export type PublicProfile = Omit<Profile, 'tokenHash'>;

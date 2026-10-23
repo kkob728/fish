@@ -16,6 +16,8 @@ import { mountUi } from './ui/App.tsx';
 import { initAudio, sfx, updateAmbient } from './audio.ts';
 import { setupTouch, IS_TOUCH } from './game/touch.ts';
 import { createStations } from './game/stations.ts';
+import { createFarms } from './game/farms.ts';
+import { PLOT_COUNT, nearPlot } from '../../shared/data/crops.ts';
 import { gameHour, phaseOf } from '../../shared/data/core.ts';
 import { NODE_TYPES, POI, regionNameAt, terrainHeight } from '../../shared/world.ts';
 
@@ -38,6 +40,7 @@ scene.add(water.mesh);
 const sky = createSky(scene, { shadowSize: IS_TOUCH ? 1024 : 2048, onThunder: () => setTimeout(() => sfx.thunder(), 300 + Math.random() * 1200) });
 const props = buildProps(scene, fx, { lite: IS_TOUCH });
 const stations = createStations(scene, fx);
+const farms = createFarms(scene, fx);
 
 function resize() {
   const w = innerWidth, hh = innerHeight;
@@ -176,6 +179,7 @@ on('welcome', (m) => {
     remotes.add(p);
   }
   stations.reset(m.stations);
+  farms.reset(m.farms);
   for (const [id, until] of Object.entries(m.nodes || {})) {
     const n = props.nodes.get(id);
     if (n) n.until = until;
@@ -258,6 +262,17 @@ function findInteract() {
       best = st.owner === S.myId ? { kind: 'cook', label: '요리하기' } : { kind: 'stall', owner: st.owner, label: `${st.name}님의 진열대 보기` };
     }
   }
+  // 텃밭: 내 밭이면 돌보기, 밭이 없으면 빈 밭 빌리기
+  if (!best) {
+    for (let i = 0; i < PLOT_COUNT; i++) {
+      if (!nearPlot(i, p.x, p.z, 1.2)) continue;
+      const f = S.farms.get(i);
+      if (f && f.owner === S.myId) best = { kind: 'farm', label: '텃밭 돌보기' };
+      else if (!f && !S.me.farm) best = { kind: 'claim', plot: i, label: '빈 텃밭 빌리기' };
+      if (best) bd = 2.5;
+      break;
+    }
+  }
   for (const it of props.interactables) {
     const d = Math.hypot(it.x - p.x, it.z - p.z);
     if (d < it.r && d < bd) {
@@ -277,6 +292,8 @@ function interact() {
   else if (it.kind === 'board') openPanel('rank');
   else if (it.kind === 'cook') openPanel('cook');
   else if (it.kind === 'stall') openPanel('stall', false, it.owner);
+  else if (it.kind === 'farm') openPanel('farm');
+  else if (it.kind === 'claim') send('farmClaim', { plot: it.plot });
 }
 
 addEventListener('keydown', (e) => {
@@ -345,6 +362,7 @@ function frame() {
   }
   remotes.update(dt, t);
   stations.update(dt);
+  farms.update(dt);
 
   const env = sky.update(dt, t, hour, focus, camera.position);
   water.uniforms.uTime.value = t;

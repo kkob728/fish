@@ -3,6 +3,7 @@ import { part, merge, flatMat, textTexture, textSprite, addWind } from './util.t
 import { buildCharacter } from './character.ts';
 import { propPlacements, gatherNodes, NODE_TYPES, POI, PIER, terrainHeight, ZONES, walkHeight, shoreRadius, riverDist } from '../../../shared/world.ts';
 import { mulberry32, fbm } from '../../../shared/rng.ts';
+import { inFarm } from '../../../shared/data/crops.ts';
 import { ROD } from '../../../shared/data/core.ts';
 
 const cyl = (rt, rb, h, s = 6) => new THREE.CylinderGeometry(rt, rb, h, s);
@@ -117,6 +118,7 @@ function buildVegetation(group, tuftCount = 6000) {
     if (h < 1.3 || h > 12) continue;
     if (Math.hypot(x - POI.swamp.x, z - POI.swamp.z) < POI.swamp.r) continue;
     if (Math.hypot(x - POI.camp.x, z - POI.camp.z) < 16) continue;
+    if (inFarm(x, z, 3)) continue;
     if (Math.hypot(x - POI.hotspring.x, z - POI.hotspring.z) < 24) continue;
     if (shoreRadius(x, z) - Math.hypot(x, z) < 12) continue;
     if (fbm(x * 0.04, z * 0.04, 2, 3) < 0.42) continue;

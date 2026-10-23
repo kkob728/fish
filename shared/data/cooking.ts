@@ -1,6 +1,7 @@
 // 요리 데이터: 식재료, 조리 도구, 레시피, 요리 효과
 import { FISH_BY_ID } from './fish.ts';
 import { RARITY } from './core.ts';
+import { PRODUCE } from './crops.ts';
 
 // ---------- 식재료 (상점 판매) ----------
 // tags: 레시피가 요구하는 성질. value: 요리 가치 계산용 원가
@@ -201,6 +202,9 @@ export function dishStars(score, ingredientStars) {
 
 export const DISH_LIMIT = 40;
 export const FOOD_BY_ID = Object.fromEntries(FOODS.map((f) => [f.id, f]));
+const PRODUCE_TAGS = Object.fromEntries(PRODUCE.filter((p) => p.tags).map((p) => [p.id, p.tags]));
 export function ingredientTags(id) {
-  return FOOD_BY_ID[id]?.tags || EXTRA_FOOD_TAGS[id] || null;
+  return FOOD_BY_ID[id]?.tags || EXTRA_FOOD_TAGS[id] || PRODUCE_TAGS[id] || null;
 }
+// 요리에 넣을 수 있는 아이템 전부 (상점 식재료, 채집물, 텃밭 수확물)
+export const COOKABLE_IDS = [...FOODS.map((f) => f.id), ...Object.keys(EXTRA_FOOD_TAGS), ...Object.keys(PRODUCE_TAGS)];

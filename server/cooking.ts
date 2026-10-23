@@ -123,9 +123,11 @@ function createCooking() {
 
       const tagLists = [...fish.map(fishTags), ...Object.entries(items).flatMap(([id, n]) => Array(n).fill(ingredientTags(id)))];
       const recipe = matchRecipe(tool, tagLists);
-      const mass = fish.reduce((a, f) => a + f.w, 0) + Object.values(items).reduce((a, n) => a + n * 0.25, 0);
+      const mass = fish.reduce((a, f) => a + f.w, 0) + Object.entries(items).reduce((a, [id, n]) => a + n * (ITEMS[id].home ? 0.4 : 0.25), 0);
       const value = fish.reduce((a, f) => a + f.price, 0) + Object.entries(items).reduce((a, [id, n]) => a + (ITEMS[id].value || 5) * n, 0);
-      const ingStars = fish.length ? fish.reduce((a, f) => a + QUALITY[f.q].stars, 0) / fish.length : 3;
+      // 재료 품질: 물고기는 품질 별, 텃밭 수확물은 별 5개. 둘 다 없으면 보통(3)
+      const starList = [...fish.map((f) => QUALITY[f.q].stars), ...Object.entries(items).flatMap(([id, n]) => (ITEMS[id].home ? Array(n).fill(5) : []))];
+      const ingStars = starList.length ? starList.reduce((a, b) => a + b, 0) / starList.length : 3;
       const variant = fish.map((f) => f.v).filter(Boolean).sort((a, b) => VARIANT[b].mult - VARIANT[a].mult)[0] || null;
       s.cook = { id: uid(), tool, startAt: now(), recipe, mass, value, ingStars, variant, fish, items };
       st.cooking = true;

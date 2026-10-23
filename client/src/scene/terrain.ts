@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { terrainHeight, WORLD_SIZE, POI, riverDist, shoreRadius, PIER } from '../../../shared/world.ts';
 import { fbm, hash2, clamp } from '../../../shared/rng.ts';
+import { FARM, PLOT_PITCH, inFarm } from '../../../shared/data/crops.ts';
 
 const C = (hex) => new THREE.Color(hex);
 const PAL = {
@@ -50,6 +51,14 @@ function terrainColor(x, h, z, ny) {
   } else {
     tmp.copy(PAL.grassA).lerp(PAL.grassB, n).lerp(PAL.grassC, clamp((h - 5) / 6, 0, 0.5));
     if (dCamp < 24) tmp.lerp(PAL.dirt, clamp((24 - dCamp) / 8, 0, 1) * (n > 0.45 ? 0.95 : 0.6));
+    // 텃밭: 짧게 깎은 풀 + 캠프에서 이어지는 흙길과 밭 사이 고랑길
+    if (inFarm(x, z, 1)) tmp.lerp(PAL.grassC, 0.35);
+    const westLane = FARM.x - FARM.w / 2 + 1.6;
+    const onPath =
+      (Math.abs(z - FARM.z) < 1.6 && x > POI.camp.x + 12 && x < westLane + 1) ||
+      (inFarm(x, z, 0) && Math.abs(x - westLane) < 1.3) ||
+      (inFarm(x, z, 0) && x > westLane && (Math.abs(z - (FARM.z - PLOT_PITCH / 2)) < 1.1 || Math.abs(z - (FARM.z + PLOT_PITCH / 2)) < 1.1));
+    if (onPath) tmp.lerp(PAL.dirt, 0.75);
   }
   tmp.offsetHSL(0, 0, j);
   return tmp;

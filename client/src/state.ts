@@ -12,6 +12,7 @@ export interface ClientState {
   nearShop: boolean;
   pos: { x: number; y: number; z: number };
   stations: Map<string, any>;
+  farms: Map<number, any>;
   cooking: boolean;
   tradeOpen?: boolean;
 }
@@ -27,6 +28,7 @@ export const S: ClientState = {
   nearShop: false,
   pos: { x: 0, y: 0, z: 0 },
   stations: new Map(), // owner -> 조리대 데이터
+  farms: new Map(), // 밭 번호 -> 텃밭 데이터
   cooking: false, // 요리 미니게임 중
 };
 

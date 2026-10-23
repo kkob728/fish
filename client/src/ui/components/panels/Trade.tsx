@@ -10,6 +10,7 @@ import { FISH_BY_ID } from '../../../../../shared/data/fish.ts';
 import { ITEMS, MATERIALS, ESSENCES, BAITS, TACKLES } from '../../../../../shared/data/items.ts';
 import { VARIANT, formatKg } from '../../../../../shared/data/core.ts';
 import { FOODS } from '../../../../../shared/data/cooking.ts';
+import { PRODUCE, SEEDS } from '../../../../../shared/data/crops.ts';
 
 interface Offer {
   items: Record<string, number>;
@@ -101,7 +102,7 @@ function Picker({ mine, locked }: { mine: Offer; locked: boolean }) {
         </Mini>,
       );
   } else {
-    const ids = pick === 'bait' ? [...BAITS, ...TACKLES].map((b) => b.id) : [...MATERIALS, ...ESSENCES, ...FOODS].map((m) => m.id);
+    const ids = pick === 'bait' ? [...BAITS, ...TACKLES].map((b) => b.id) : [...MATERIALS, ...ESSENCES, ...FOODS, ...PRODUCE, ...SEEDS].map((m) => m.id);
     for (const id of ids) {
       const left = itemCount(id) - (mine.items[id] || 0);
       if (left <= 0) continue;

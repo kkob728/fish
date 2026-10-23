@@ -3,6 +3,7 @@ import { getDb } from './db.ts';
 import { WEATHERS } from '../shared/data/core.ts';
 import { pickWeighted, randInt } from '../shared/rng.ts';
 import { type Handler, now, world, send, broadcast, sysChat } from './core.ts';
+import { onWeather } from './farm.ts';
 
 const state: Handler = (s, m) => {
   const x = Number(m.x), z = Number(m.z), y = Number(m.y), ry = Number(m.ry);
@@ -66,5 +67,6 @@ export function rollWeather(first = false) {
   world.weather = { id, until: now() + randInt(4, 9) * 60 * 1000 };
   broadcast('weather', { weather: world.weather });
   if (!first && id !== prev) sysChat(`날씨가 ${WEATHERS[id].name}(으)로 바뀌었어요.`, null, 'weather');
+  onWeather();
   setTimeout(() => rollWeather(), world.weather.until - now());
 }

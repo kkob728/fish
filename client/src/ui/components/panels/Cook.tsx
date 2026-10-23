@@ -12,7 +12,7 @@ import { U, closePanel, setTab, toast } from '../../store.tsx';
 import { FISH_BY_ID } from '../../../../../shared/data/fish.ts';
 import { ITEMS } from '../../../../../shared/data/items.ts';
 import { RARITY, QUALITY, VARIANT, formatKg } from '../../../../../shared/data/core.ts';
-import { TOOLS, RECIPES, MYSTERY, FOODS, EXTRA_FOOD_TAGS, TAG_NAME, FOOD_EFFECTS, fishTags, ingredientTags, matchRecipe } from '../../../../../shared/data/cooking.ts';
+import { TOOLS, RECIPES, MYSTERY, COOKABLE_IDS, TAG_NAME, FOOD_EFFECTS, fishTags, ingredientTags, matchRecipe } from '../../../../../shared/data/cooking.ts';
 import type { Dish } from '../../../../../shared/types.ts';
 
 type Ing = { kind: 'fish'; uid: string } | { kind: 'item'; id: string };
@@ -55,7 +55,7 @@ function CookTab({ redraw }: { redraw: () => void }) {
   };
   const pv = preview();
   const fishList = S.me.fish.filter((f) => !f.lock && !sel.ings.some((g) => g.kind === 'fish' && g.uid === f.uid));
-  const itemIds = [...FOODS.map((f) => f.id), ...Object.keys(EXTRA_FOOD_TAGS)].filter((id) => itemCount(id) - selCount(id) > 0);
+  const itemIds = COOKABLE_IDS.filter((id) => itemCount(id) - selCount(id) > 0);
   return (
     <>
       <Section>조리 도구</Section>
@@ -144,7 +144,7 @@ function CookTab({ redraw }: { redraw: () => void }) {
           {itemIds.length ? (
             <div class="pick-items">
               {itemIds.map((id) => (
-                <button key={id} class="small food-btn" onClick={() => add({ kind: 'item', id })} title={(ingredientTags(id) || []).map((t) => TAG_NAME[t]).join(', ')}>
+                <button key={id} class={`small food-btn${ITEMS[id].home ? ' home' : ''}`} onClick={() => add({ kind: 'item', id })} title={(ingredientTags(id) || []).map((t) => TAG_NAME[t]).join(', ') + (ITEMS[id].home ? ' · 텃밭산: 요리 별이 잘 나와요' : '')}>
                   <ItemIcon id={id} />
                   {`${ITEMS[id].name} ${itemCount(id) - selCount(id)}`}
                 </button>

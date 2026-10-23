@@ -1,4 +1,6 @@
 // 손그림 느낌의 SVG 아이콘 — 짙은 갈색 외곽선 + 단색 면. 이모지를 쓰지 않는다.
+import { CROP, CROPS } from '../../../shared/data/crops.ts';
+
 const L = '#3b2614';
 const G = `stroke="${L}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"`;
 const wrap = (inner) => `<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${inner}</svg>`;
@@ -88,6 +90,10 @@ const ICONS = {
   dishGrill: `<ellipse cx="16" cy="21" rx="13" ry="6" fill="#f4f1e8" ${G}/><path d="M6 18c4-5 12-6 17-3l4-3v10l-4-3c-5 3-13 2-17-1z" fill="#c8823a" ${G}/><path d="M11 15l2 4M15 14l2 4M19 14l2 4" stroke="#7a4a1a" stroke-width="1.5"/>`,
   dishPot: `<path d="M4 15h24a12 9 0 0 1-24 0z" fill="#e8743a" ${G}/><ellipse cx="16" cy="15" rx="12" ry="3" fill="#f2a05a" ${G}/><path d="M11 10c1-2-1-3 0-5M17 10c1-2-1-3 0-5M22 10c1-2-1-3 0-5" fill="none" stroke="#aab" stroke-width="1.6" stroke-linecap="round"/><circle cx="12" cy="15" r="1.4" fill="#7cbf55"/>`,
   dishFryer: `<ellipse cx="16" cy="22" rx="13" ry="5" fill="#f4f1e8" ${G}/><path d="M7 19c0-5 5-7 8-5 2-3 8-2 9 2 2 1 2 4 0 5H8c-1 0-1-1-1-2z" fill="#e8b84a" ${G}/><path d="M11 16l1 2M16 15l1 2M20 16l1 2" stroke="#b8862a" stroke-width="1.4"/>`,
+  sprout: `<path d="M16 28V15" fill="none" stroke="${L}" stroke-width="5" stroke-linecap="round"/><path d="M16 28V15" fill="none" stroke="#6aa84a" stroke-width="2.4" stroke-linecap="round"/><path d="M16 16C16 9 11 6 5 6c0 6 4 10 11 10z" fill="#7cbf55" ${G}/><path d="M16 14c0-6 4-9 11-9 0 6-4 9-11 9z" fill="#9ad46a" ${G}/><path d="M8 28h16" ${G}/>`,
+  water: `<path d="M6 14h14v10a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3z" fill="#4a86c5" ${G}/><path d="M20 17l7-6" fill="none" stroke="${L}" stroke-width="5" stroke-linecap="round"/><path d="M20 17l7-6" fill="none" stroke="#4a86c5" stroke-width="2.4" stroke-linecap="round"/><path d="M9 14a4 4 0 0 1 8 0" fill="none" ${G}/><path d="M28 15v2M26 18v2M29 19v2" stroke="#6fc3ff" stroke-width="1.8" stroke-linecap="round"/>`,
+  sickle: `<path d="M8 27l6-6" fill="none" stroke="${L}" stroke-width="6" stroke-linecap="round"/><path d="M8 27l6-6" fill="none" stroke="#c08a52" stroke-width="3" stroke-linecap="round"/><path d="M14 21C10 13 14 5 24 4c-6 3-8 9-6 15z" fill="#d8dfe4" ${G}/>`,
+  fence: `<path d="M7 9l2-3 2 3v18H7zM15 9l2-3 2 3v18h-4zM23 9l2-3 2 3v18h-4z" fill="#c08a52" ${G}/><path d="M4 13h25M4 21h25" fill="none" stroke="${L}" stroke-width="5" stroke-linecap="round"/><path d="M4 13h25M4 21h25" fill="none" stroke="#d9a46a" stroke-width="2.4" stroke-linecap="round"/>`,
   station: `<rect x="4" y="14" width="24" height="4" rx="1" fill="#c08a52" ${G}/><path d="M7 18v9M25 18v9" ${G}/><path d="M9 14V9h8v5" fill="#9aa3ab" ${G}/><path d="M19 14v-3h7v3" fill="#4a4040" ${G}/><path d="M11 6c1-2-1-3 0-4" fill="none" stroke="#aab" stroke-width="1.6" stroke-linecap="round"/>`,
   lantern: `<path d="M13 4h6M16 4v3" ${G}/><rect x="9" y="7" width="14" height="20" rx="6" fill="#d8354a" ${G}/><path d="M9 12h14M9 22h14" stroke="#f2c14e" stroke-width="2"/><rect x="13" y="13" width="6" height="8" rx="2" fill="#f6f08a"/>`,
 };
@@ -120,6 +126,16 @@ export const PHASE_ICON = { dawn: 'dawn', day: 'sun', dusk: 'dawn', night: 'moon
 
 const FOOD_LABEL = { rice: '쌀', radish: '무', greenonion: '파', garlic: '늘', chili: '고', soy: '간', doenjang: '된', oil: '유', lemon: '레', vinegar: '초', gim: '김', potato: '감', tofu: '두', egg: '란', sugar: '당' };
 
+// 씨앗 봉투: 작물 색 그림 + 첫 글자
+function seedSvg(color, label) {
+  return `<path d="M7 6h18l-1 21H8z" fill="#e8d4a8" ${G}/><path d="M7 6l2 3h14l2-3" fill="none" ${G}/><circle cx="16" cy="17" r="6.5" fill="${color}" ${G}/><text x="16" y="21" text-anchor="middle" font-family="Jua, sans-serif" font-size="9" fill="${L}">${label}</text>`;
+}
+// 텃밭 수확물: 둥근 열매 + 잎 하나 (집에서 기른 표시)
+function produceSvg(color, label) {
+  const dark = ['#d8354a', '#4a9a3a', '#e8862a'].includes(color);
+  return `<circle cx="16" cy="18" r="10.5" fill="${color}" ${G}/><path d="M16 8c1-3 4-4 7-3-1 3-4 4-7 3z" fill="#7cbf55" ${G}/><text x="16" y="22.5" text-anchor="middle" font-family="Jua, sans-serif" font-size="11" fill="${dark ? '#fff6dc' : L}">${label}</text>`;
+}
+
 function gemSvg(color) {
   return `<path d="M9 5h14l5 7-12 15L4 12z" fill="${color}" ${G}/><path d="M4 12h24M12 5l-2 7 6 15 6-15-2-7" fill="none" stroke="${L}" stroke-width="1.4"/>${shine(12, 9, 1.4)}`;
 }
@@ -132,6 +148,11 @@ export function itemSvg(id: string | null, essenceColor?: string) {
   if (!id) return svg('hook');
   if (id.startsWith('ess_')) return wrap(gemSvg(essenceColor || '#c78bff'));
   if (FOOD_ICON_COLOR[id]) return wrap(foodSvg(id, FOOD_LABEL[id]));
+  if (id.startsWith('seed_') && CROP[id.slice(5)]) return wrap(seedSvg(CROP[id.slice(5)].color, CROP[id.slice(5)].name[0]));
+  if (id.startsWith('g_')) {
+    const c = CROPS.find((x) => x.out === id);
+    if (c) return wrap(produceSvg(c.color, c.name[0]));
+  }
   const m = ITEM_ICON[id];
   if (!m) return svg('sparkle');
   if (Array.isArray(m)) return wrap(ICONS[m[0]] + (m[1] ? hookBadge : ''));

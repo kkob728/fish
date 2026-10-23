@@ -176,12 +176,82 @@ test('거래: 양쪽 준비 → 양쪽 확정하면 한 번에 교환', async ()
   assert.equal(player('테스트B').items.chum, 3);
 });
 
+test('텃밭: 빌리기 → 심기 → 물 주기 → 거두기, 마른 땅은 느림, 비가 오면 물기, 넓히기', async () => {
+  const core = await import('../server/core.ts');
+  const farm = await import('../server/farm.ts');
+  const { plotCenter, growthAt } = await import('../shared/data/crops.ts');
+  const p = player('테스트A');
+  const sess = core.sessions.get(p.id);
+  // 멀리서는 못 빌림
+  sess.x = 0;
+  sess.z = 0;
+  A.msg('farmClaim', { plot: 0 });
+  assert.match((await A.wait('toast')).text, /가까이/);
+  const c = plotCenter(0);
+  sess.x = c.x;
+  sess.z = c.z;
+  A.msg('farmClaim', { plot: 0 });
+  const f0 = await A.wait('farm');
+  assert.equal(f0.farm.plot, 0);
+  assert.equal(p.farm.size, 6);
+  // 다른 사람은 같은 밭을 못 빌림
+  const sb = core.sessions.get(player('테스트B').id);
+  sb.x = c.x;
+  sb.z = c.z;
+  B.msg('farmClaim', { plot: 0 });
+  assert.match((await B.wait('toast')).text, /주인/);
+
+  // 씨앗 없이 심기 → 거절, 씨앗이 있으면 빈 칸에 하나씩
+  A.msg('farmPlant', { crop: 'radish' });
+  assert.match((await A.wait('toast')).text, /씨앗/);
+  p.items.seed_radish = 4;
+  p.items.seed_watermelon = 2;
+  A.msg('farmPlant', { crop: 'radish' });
+  assert.equal((await A.wait('farmDone')).n, 4);
+  assert.equal(p.items.seed_radish || 0, 0);
+  A.msg('farmPlant', { crop: 'watermelon', tiles: [5] });
+  await A.wait('farmDone');
+  assert.equal(p.farm.tiles[5].c, 'watermelon');
+
+  // 무에만 물 주기 → 15분 뒤 무는 다 자라고, 마른 수박은 40% 속도
+  A.msg('farmWater', { tiles: [0, 1, 2, 4] });
+  await A.wait('farmDone');
+  const t0 = Date.now();
+  timeShift += 16 * 60000;
+  assert.equal(growthAt(p.farm.tiles[0], Date.now()), 1);
+  const wm = growthAt(p.farm.tiles[5], Date.now());
+  assert.ok(Math.abs(wm - (16 * 0.4) / 70) < 0.01, `마른 수박 ${wm}`);
+  A.msg('farmHarvest');
+  const h = await A.wait('farmDone');
+  assert.ok(h.items.g_radish >= 8 && h.items.g_radish <= 12);
+  assert.ok(p.farm.tiles[5], '덜 자란 수박은 남음');
+  assert.equal(p.farm.tiles[0], null);
+
+  // 비가 오면 접속 여부와 상관없이 물기가 생김
+  core.world.weather = { id: 'rain', until: Date.now() + 5 * 60000 };
+  farm.onWeather();
+  assert.ok(p.farm.tiles[5].wet > Date.now());
+  core.world.weather = { id: 'clear', until: Date.now() + 60000 };
+  assert.ok(Date.now() - t0 > 0);
+
+  // 넓히기: 돈이 들고 칸이 늘어남
+  p.money = 5000;
+  A.msg('farmExpand');
+  await A.wait('farm');
+  assert.equal(p.farm.size, 9);
+  assert.equal(p.money, 5000 - 1200);
+  p.items.seed_radish = 10;
+  A.msg('farmPlant', { crop: 'radish' });
+  assert.equal((await A.wait('farmDone')).n, 8, '9칸 중 수박 1칸 빼고');
+});
+
 test('저장 후 다시 불러와도 진행 상황이 남음', async () => {
   await db.flushDb();
   const before = JSON.stringify(player('테스트A').dishes);
   await db.loadDb();
   assert.equal(JSON.stringify(player('테스트A').dishes), before);
   assert.ok(player('테스트A').xp > 0);
+  assert.equal(player('테스트A').farm.size, 9);
   Date.now = realNow;
   fs.rmSync(DATA, { recursive: true, force: true });
   setTimeout(() => process.exit(0), 50); // 서버 타이머 정리

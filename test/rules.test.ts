@@ -111,3 +111,30 @@ test('요리 조합: 대표 레시피가 맞게 고름', () => {
   assert.ok(dishStars(1, 5) === 5 && dishStars(0, 1) === 1);
   assert.ok(dishDuration(100) > dishDuration(1) && dishDuration(0) >= 120);
 });
+
+test('텃밭: 밭 크기별 칸 수, 물 준 땅이 더 빨리 자람, 수확물은 요리 재료', async () => {
+  const { CROPS, CROP, PLOT_SIZES, TILE_GRID, tileActive, growthAt, plotCenter, PLOT_COUNT, inFarm, DRY_RATE } = await import('../shared/data/crops.ts');
+  const { ingredientTags } = await import('../shared/data/cooking.ts');
+  const { walkHeight } = await import('../shared/world.ts');
+  for (const size of PLOT_SIZES) {
+    const n = Array.from({ length: TILE_GRID * TILE_GRID }, (_, i) => i).filter((i) => tileActive(size, i)).length;
+    assert.equal(n, size);
+  }
+  const wet = { c: 'radish', p: 0, at: 0, wet: 1e12 };
+  const dry = { c: 'radish', p: 0, at: 0, wet: 0 };
+  const min = CROP.radish.min * 60000;
+  assert.equal(growthAt(wet, min), 1);
+  assert.ok(Math.abs(growthAt(dry, min) - DRY_RATE) < 1e-9);
+  for (const c of CROPS) {
+    assert.ok(ITEMS[c.out], `${c.id} 수확물`);
+    assert.ok(ITEMS[`seed_${c.id}`]?.seed === c.id, `${c.id} 씨앗`);
+    if (c.kind === 'food') assert.ok(ingredientTags(c.out), `${c.out} 요리 재료`);
+    assert.ok(c.min >= 10 && c.min <= 70);
+  }
+  // 밭은 모두 걸을 수 있는 평평한 땅 위
+  for (let i = 0; i < PLOT_COUNT; i++) {
+    const p = plotCenter(i);
+    assert.ok(inFarm(p.x, p.z));
+    assert.ok(Math.abs(walkHeight(p.x, p.z) - 6) < 0.01, `밭 ${i} 높이`);
+  }
+});

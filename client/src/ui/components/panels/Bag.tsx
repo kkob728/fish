@@ -7,6 +7,7 @@ import { U, closePanel, setTab } from '../../store.tsx';
 import { ITEMS, MATERIALS, ESSENCES, BAITS, TACKLES, RECIPES } from '../../../../../shared/data/items.ts';
 import { ROD } from '../../../../../shared/data/core.ts';
 import { FOODS } from '../../../../../shared/data/cooking.ts';
+import { PRODUCE, SEEDS } from '../../../../../shared/data/crops.ts';
 
 const BAG_TABS: [string, string, string][] = [
   ['fish', '물고기', 'fish'],
@@ -33,6 +34,10 @@ export function BagPanel() {
         <ItemRows ids={ESSENCES.map((m) => m.id)} sell={sell} empty="변이 물고기를 손질하면 정수가 나와요." />
         <Section>식재료</Section>
         <ItemRows ids={FOODS.map((m) => m.id)} sell={sell} empty="식재료가 없어요. 상점의 식재료 칸에서 살 수 있어요." />
+        <Section>텃밭 수확물</Section>
+        <ItemRows ids={PRODUCE.map((m) => m.id)} sell={sell} empty="텃밭에서 거둔 작물이 여기 들어와요." />
+        <Section>씨앗</Section>
+        <ItemRows ids={SEEDS.map((m) => m.id)} sell={sell} empty="씨앗은 상점의 씨앗 칸에서 살 수 있어요." />
       </>
     );
     foot = <span class="muted">{sell ? '상점 앞이라 재료도 팔 수 있어요.' : '재료는 상점 앞에서 팔 수 있어요.'}</span>;

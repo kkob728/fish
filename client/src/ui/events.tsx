@@ -8,16 +8,20 @@ import { clearCookSelection } from './components/panels/Cook.tsx';
 import { U, bump, toast, toastItems, itemsLine, chatLine, openPanel, closePanel } from './store.tsx';
 import { ItemIcon, Icon } from './components/common.tsx';
 import { ITEMS, RECIPE } from '../../../shared/data/items.ts';
+import { CROP } from '../../../shared/data/crops.ts';
+
+// 받침에 맞춰 을/를
+const eulReul = (w: string) => w + ((w.charCodeAt(w.length - 1) - 0xac00) % 28 ? '을' : '를');
 
 export function initUiEvents() {
-  for (const t of ['me', 'join', 'leave', 'buffs', 'station', 'records']) on(t, bump);
+  for (const t of ['me', 'join', 'leave', 'buffs', 'station', 'records', 'farm', 'farms']) on(t, bump);
 
   on('chat', (m) => {
     chatLine(m);
     if (!m.sys) sfx.chat();
   });
   on('toast', (m) => {
-    toast(m.text, m.kind, 3600, m.kind === 'buff' ? BUFF_ICON[m.buff] || 'sparkle' : null);
+    toast(m.text, m.kind, 3600, m.icon || (m.kind === 'buff' ? BUFF_ICON[m.buff] || 'sparkle' : null));
     if (m.kind === 'buff') sfx.buff();
   });
   on('levelUp', (m) => {
@@ -60,6 +64,18 @@ export function initUiEvents() {
   on('dismantled', (m) => {
     toastItems(m.items, '손질해서 얻음  ', 'knife');
     sfx.craft();
+  });
+  on('farmDone', (m) => {
+    if (m.act === 'plant') {
+      toast(`${eulReul(CROP[m.crop].name)} ${m.n}칸에 심었어요.`, 'ok', 2600, 'sprout');
+      sfx.gather();
+    } else if (m.act === 'water') {
+      toast(`${m.n}칸에 물을 줬어요.`, 'info', 2200, 'water');
+      sfx.splash(0.6);
+    } else {
+      toastItems(m.items, '수확!  ', 'sickle');
+      sfx.craft();
+    }
   });
   on('leaderboard', (m) => {
     U.leaderboard = m;

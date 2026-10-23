@@ -1,5 +1,6 @@
 // 재료와 미끼, 제작 레시피, 상점 목록
 import { FOODS } from './cooking.ts';
+import { CROPS, PRODUCE, SEEDS } from './crops.ts';
 import type { Item } from '../types.ts';
 
 export interface CraftRecipe {
@@ -76,7 +77,7 @@ export const TACKLES = [
   { id: 'tough_line', name: '질긴 낚싯줄', icon: '', key: '4', value: 45, desc: '이번 파이팅 동안 진행도가 절반만 떨어져요.' },
 ].map((t) => ({ ...t, tackle: true }));
 
-export const ITEMS: Record<string, Item> = Object.fromEntries([...MATERIALS, ...ESSENCES, ...BAITS, ...TACKLES, ...FOODS].map((i) => [i.id, i]));
+export const ITEMS: Record<string, Item> = Object.fromEntries([...MATERIALS, ...ESSENCES, ...BAITS, ...TACKLES, ...FOODS, ...PRODUCE, ...SEEDS].map((i) => [i.id, i]));
 
 // 제작: in 항목은 { id, n } 또는 { tag: 'essence', n } (아무 정수)
 export const RECIPES: CraftRecipe[] = [
@@ -121,6 +122,7 @@ export const SHOP_STOCK = [
   { id: 'big_float', price: 100 },
   { id: 'tough_line', price: 140 },
   ...FOODS.map((f) => ({ id: f.id, price: f.price })),
+  ...CROPS.map((c) => ({ id: `seed_${c.id}`, price: c.seed })),
 ];
 
 export const FISH_BAG_LIMIT = 60;
