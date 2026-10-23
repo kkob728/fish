@@ -11,7 +11,7 @@ services:
     autoDeploy: true
     envVars:
       - key: NODE_VERSION
-        value: 22.12.0
+        value: 24.11.0
       # Neon 등 Postgres 접속 주소. 대시보드에서 직접 붙여 넣습니다 (저장소에는 저장되지 않음).
       - key: DATABASE_URL
         sync: false

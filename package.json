@@ -5,21 +5,29 @@
   "description": "멀티플레이 3D 로우폴리 낚시 웹게임",
   "type": "module",
   "scripts": {
-    "dev": "concurrently -k -n server,client -c cyan,magenta \"node --watch server/index.js\" \"vite\"",
+    "dev": "concurrently -k -n server,client -c cyan,magenta \"node --watch server/index.ts\" \"vite\"",
     "build": "vite build",
-    "start": "node server/index.js",
-    "check": "node scripts/check.js"
+    "start": "node server/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test \"test/**/*.test.ts\"",
+    "check": "tsc --noEmit && node scripts/check.ts && npm test"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22.18"
   },
   "dependencies": {
     "pg": "^8.13.1",
+    "preact": "^10.24.3",
     "three": "^0.169.0",
     "ws": "^8.18.0"
   },
   "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/pg": "^8.11.10",
+    "@types/three": "^0.169.0",
+    "@types/ws": "^8.5.13",
     "concurrently": "^9.0.1",
+    "typescript": "^5.8.3",
     "vite": "^5.4.10"
   }
 }
